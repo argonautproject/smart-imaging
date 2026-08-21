@@ -1,0 +1,12 @@
+# Reference checkouts of the source repos (each is its own git clone)
+reference/
+
+# IG Publisher / SUSHI build outputs
+fsh-generated/
+output/
+temp/
+template/
+input-cache/
+txCache/
+*.log
+Requirements-fromNarrative.json

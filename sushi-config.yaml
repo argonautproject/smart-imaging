@@ -1,0 +1,36 @@
+id: fhir.argonaut.smart-imaging
+canonical: http://fhir.org/argonaut/smart-imaging
+name: SmartImagingAccess
+title: SMART Imaging Access
+description: >-
+  Access a patient's imaging studies and DICOM data using the same SMART on
+  FHIR authorization an app already uses for clinical data.
+status: draft
+version: 0.1.0
+fhirVersion: 4.0.1
+copyrightYear: 2023+
+releaseLabel: ci-build
+publisher:
+  name: Argonaut Project
+  url: https://confluence.hl7.org/display/AP/Argonaut+Project+Home
+jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World"
+
+dependencies:
+  hl7.fhir.uv.smart-app-launch: 2.2.0
+
+pages:
+  index.md:
+    title: Home
+  specification.md:
+    title: Specification
+  identifiers.md:
+    title: Imaging Identifiers
+  implementations.md:
+    title: Implementations
+
+menu:
+  Home: index.html
+  Specification: specification.html
+  Identifiers: identifiers.html
+  Implementations: implementations.html
+  Artifacts: artifacts.html

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" width="820" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Imaging workflow in three steps: ordering mints the Accession Number in the RIS; acquisition mints the DICOM UIDs in the PACS; reporting ties the report back to the EHR by MRN and Accession Number">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrs" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#9aa3af"/>
+    </marker>
+  </defs>
+
+  <!-- Card 1: Order -->
+  <rect x="40" y="36" width="260" height="256" rx="10" fill="#fbfcfe" stroke="#d7dce4"/>
+  <circle cx="66" cy="66" r="12" fill="#475569"/>
+  <text x="66" y="70.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+  <text x="86" y="71" font-size="14" font-weight="700" fill="#1f2430">Order</text>
+
+  <rect x="78" y="100" width="64" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="110" y="117" font-size="11" fill="#3c4453" text-anchor="middle">Clinician</text>
+  <line x1="144" y1="113" x2="158" y2="113" stroke="#9aa3af" stroke-width="1.4" marker-end="url(#arrs)"/>
+  <rect x="160" y="100" width="44" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="182" y="117" font-size="11" fill="#3c4453" text-anchor="middle">EHR</text>
+  <line x1="206" y1="113" x2="220" y2="113" stroke="#9aa3af" stroke-width="1.4" marker-end="url(#arrs)"/>
+  <rect x="222" y="100" width="40" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="242" y="117" font-size="11" fill="#3c4453" text-anchor="middle">RIS</text>
+
+  <text x="170" y="160" font-size="10.5" fill="#8a93a1" text-anchor="middle">the RIS mints:</text>
+  <rect x="105" y="170" width="130" height="24" rx="12" fill="#fde9c8" stroke="#d97706"/>
+  <text x="170" y="186" font-size="11" font-weight="600" fill="#92400e" text-anchor="middle">Accession Number</text>
+
+  <text x="170" y="226" font-size="11.5" fill="#5b6472" text-anchor="middle">The EHR stores it on the imaging</text>
+  <text x="170" y="244" font-size="11.5" fill="#5b6472" text-anchor="middle">order (ServiceRequest). The patient</text>
+  <text x="170" y="262" font-size="11.5" fill="#5b6472" text-anchor="middle">is identified by MRN.</text>
+
+  <line x1="302" y1="164" x2="336" y2="164" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- Card 2: Acquire -->
+  <rect x="340" y="36" width="260" height="256" rx="10" fill="#fbfcfe" stroke="#d7dce4"/>
+  <circle cx="366" cy="66" r="12" fill="#475569"/>
+  <text x="366" y="70.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+  <text x="386" y="71" font-size="14" font-weight="700" fill="#1f2430">Acquire</text>
+
+  <rect x="400" y="100" width="70" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="435" y="117" font-size="11" fill="#3c4453" text-anchor="middle">Modality</text>
+  <line x1="472" y1="113" x2="486" y2="113" stroke="#9aa3af" stroke-width="1.4" marker-end="url(#arrs)"/>
+  <rect x="488" y="100" width="52" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="514" y="117" font-size="11" fill="#3c4453" text-anchor="middle">PACS</text>
+
+  <text x="470" y="152" font-size="10.5" fill="#8a93a1" text-anchor="middle">new identifiers, minted with the images:</text>
+  <rect x="400" y="160" width="140" height="24" rx="12" fill="#ccfbf1" stroke="#0d9488"/>
+  <text x="470" y="176" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Study Instance UID</text>
+  <rect x="395" y="190" width="150" height="24" rx="12" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="470" y="206" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Series Instance UIDs</text>
+  <rect x="400" y="220" width="140" height="24" rx="12" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="470" y="236" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">SOP Instance UIDs</text>
+
+  <text x="470" y="264" font-size="11.5" fill="#5b6472" text-anchor="middle">DICOM headers also carry the</text>
+  <text x="470" y="282" font-size="11.5" fill="#5b6472" text-anchor="middle">patient's MRN + Accession Number.</text>
+
+  <line x1="602" y1="164" x2="636" y2="164" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- Card 3: Report -->
+  <rect x="640" y="36" width="260" height="256" rx="10" fill="#fbfcfe" stroke="#d7dce4"/>
+  <circle cx="666" cy="66" r="12" fill="#475569"/>
+  <text x="666" y="70.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+  <text x="686" y="71" font-size="14" font-weight="700" fill="#1f2430">Report</text>
+
+  <rect x="671" y="100" width="78" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="710" y="117" font-size="11" fill="#3c4453" text-anchor="middle">Radiologist</text>
+  <line x1="751" y1="113" x2="765" y2="113" stroke="#9aa3af" stroke-width="1.4" marker-end="url(#arrs)"/>
+  <rect x="767" y="100" width="40" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="787" y="117" font-size="11" fill="#3c4453" text-anchor="middle">RIS</text>
+  <line x1="809" y1="113" x2="823" y2="113" stroke="#9aa3af" stroke-width="1.4" marker-end="url(#arrs)"/>
+  <rect x="825" y="100" width="44" height="26" rx="6" fill="#ffffff" stroke="#9aa3af"/>
+  <text x="847" y="117" font-size="11" fill="#3c4453" text-anchor="middle">EHR</text>
+
+  <text x="770" y="160" font-size="10.5" fill="#8a93a1" text-anchor="middle">the report is keyed by:</text>
+  <rect x="674" y="170" width="52" height="24" rx="12" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="700" y="186" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">MRN</text>
+  <rect x="736" y="170" width="130" height="24" rx="12" fill="#fde9c8" stroke="#d97706"/>
+  <text x="801" y="186" font-size="11" font-weight="600" fill="#92400e" text-anchor="middle">Accession Number</text>
+
+  <text x="770" y="226" font-size="11.5" fill="#5b6472" text-anchor="middle">It lands in the EHR as a</text>
+  <text x="770" y="244" font-size="11.5" fill="#5b6472" text-anchor="middle">DiagnosticReport — ideally carrying</text>
+  <text x="770" y="262" font-size="11.5" fill="#5b6472" text-anchor="middle">the Study Instance UID.</text>
+</svg>

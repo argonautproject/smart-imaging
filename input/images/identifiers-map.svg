@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 570" width="860" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Three system models side by side — the EHR's FHIR model, the Imaging Server's FHIR model, and the PACS DICOM model — with dashed lines connecting the shared identifiers: MRN, Accession Number, and Study Instance UID">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Column headers -->
+  <text x="165" y="38" font-size="13.5" font-weight="700" fill="#1d4ed8" text-anchor="middle">EHR — clinical FHIR</text>
+  <text x="465" y="38" font-size="13.5" font-weight="700" fill="#0f766e" text-anchor="middle">Imaging Server — FHIR</text>
+  <text x="760" y="38" font-size="13.5" font-weight="700" fill="#475569" text-anchor="middle">PACS — DICOM</text>
+
+  <!-- Column backgrounds -->
+  <rect x="30" y="50" width="270" height="480" rx="10" fill="#f5f9ff" stroke="#c4d5f2"/>
+  <rect x="330" y="50" width="270" height="480" rx="10" fill="#f0faf8" stroke="#b2ddd5"/>
+  <rect x="630" y="50" width="260" height="480" rx="10" fill="#f4f5f7" stroke="#d2d6dd"/>
+
+  <!-- Cross-system identifier links (drawn before boxes' content, above backgrounds) -->
+  <g fill="none" stroke-width="1.6" stroke-dasharray="5,4">
+    <!-- MRN: EHR Patient <-> DICOM Study -->
+    <path d="M126,147 H306 V538 H620 V221 H664" stroke="#2563eb"/>
+    <!-- Accession Number: EHR ServiceRequest <-> DICOM Study -->
+    <path d="M204,267 H322 V548 H612 V187 H664" stroke="#d97706"/>
+    <!-- Study Instance UID: EHR DiagnosticReport <-> ImagingStudy <-> DICOM Study -->
+    <path d="M224,391 H314 V153 H372" stroke="#0d9488"/>
+    <path d="M524,153 H664" stroke="#0d9488"/>
+  </g>
+
+  <!-- EHR column -->
+  <rect x="60" y="90" width="210" height="76" rx="8" fill="#ffffff" stroke="#93b8f0"/>
+  <text x="74" y="112" font-size="13" font-weight="700" fill="#1f2430">Patient</text>
+  <text x="74" y="130" font-size="10.5" fill="#8a93a1">identifier:</text>
+  <rect x="74" y="136" width="52" height="22" rx="11" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="100" y="151" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">MRN</text>
+
+  <rect x="60" y="210" width="210" height="76" rx="8" fill="#ffffff" stroke="#93b8f0"/>
+  <text x="74" y="232" font-size="13" font-weight="700" fill="#1f2430">ServiceRequest</text>
+  <text x="74" y="250" font-size="10.5" fill="#8a93a1">identifier:</text>
+  <rect x="74" y="256" width="130" height="22" rx="11" fill="#fde9c8" stroke="#d97706"/>
+  <text x="139" y="271" font-size="11" font-weight="600" fill="#92400e" text-anchor="middle">Accession Number</text>
+
+  <rect x="60" y="330" width="210" height="88" rx="8" fill="#ffffff" stroke="#93b8f0"/>
+  <text x="74" y="352" font-size="13" font-weight="700" fill="#1f2430">DiagnosticReport</text>
+  <text x="74" y="370" font-size="10.5" fill="#8a93a1">study reference:</text>
+  <rect x="74" y="376" width="150" height="22" rx="11" fill="#ccfbf1" stroke="#0d9488"/>
+  <text x="149" y="391" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Study Instance UID</text>
+
+  <line x1="165" y1="210" x2="165" y2="172" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arr)"/>
+  <text x="172" y="192" font-size="10.5" fill="#6b7280" stroke="#f5f9ff" stroke-width="3" paint-order="stroke">subject</text>
+  <line x1="165" y1="330" x2="165" y2="292" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arr)"/>
+  <text x="172" y="312" font-size="10.5" fill="#6b7280" stroke="#f5f9ff" stroke-width="3" paint-order="stroke">basedOn</text>
+
+  <!-- Imaging column -->
+  <rect x="360" y="90" width="210" height="184" rx="8" fill="#ffffff" stroke="#7fd1c4"/>
+  <text x="374" y="112" font-size="13" font-weight="700" fill="#1f2430">ImagingStudy</text>
+  <text x="374" y="136" font-size="10.5" fill="#8a93a1">identifier:</text>
+  <rect x="374" y="142" width="150" height="22" rx="11" fill="#ccfbf1" stroke="#0d9488"/>
+  <text x="449" y="157" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Study Instance UID</text>
+  <text x="374" y="182" font-size="10.5" fill="#8a93a1">series.uid:</text>
+  <rect x="374" y="188" width="150" height="22" rx="11" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="449" y="203" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Series Instance UID</text>
+  <text x="374" y="228" font-size="10.5" fill="#8a93a1">series.instance.uid:</text>
+  <rect x="374" y="234" width="150" height="22" rx="11" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="449" y="249" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">SOP Instance UID</text>
+  <text x="374" y="266" font-size="9.5" fill="#8a93a1">subject → Patient · basedOn → order</text>
+
+  <rect x="360" y="320" width="210" height="64" rx="8" fill="#ffffff" stroke="#7fd1c4"/>
+  <text x="374" y="342" font-size="13" font-weight="700" fill="#1f2430">Endpoint</text>
+  <rect x="374" y="352" width="150" height="22" rx="11" fill="#eef0f3" stroke="#9aa3af"/>
+  <text x="449" y="367" font-size="11" font-weight="600" fill="#3c4453" text-anchor="middle">WADO-RS base URL</text>
+
+  <line x1="465" y1="274" x2="465" y2="314" stroke="#6b7280" stroke-width="1.4" marker-end="url(#arr)"/>
+  <text x="472" y="298" font-size="10.5" fill="#6b7280" stroke="#f0faf8" stroke-width="3" paint-order="stroke">endpoint</text>
+
+  <!-- DICOM column -->
+  <rect x="652" y="90" width="216" height="344" rx="8" fill="#ffffff" stroke="#b6bdc9"/>
+  <text x="666" y="112" font-size="13" font-weight="700" fill="#1f2430">Study</text>
+  <rect x="666" y="142" width="150" height="22" rx="11" fill="#ccfbf1" stroke="#0d9488"/>
+  <text x="741" y="157" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Study Instance UID</text>
+  <rect x="666" y="176" width="130" height="22" rx="11" fill="#fde9c8" stroke="#d97706"/>
+  <text x="731" y="191" font-size="11" font-weight="600" fill="#92400e" text-anchor="middle">Accession Number</text>
+  <rect x="666" y="210" width="52" height="22" rx="11" fill="#dbeafe" stroke="#2563eb"/>
+  <text x="692" y="225" font-size="11" font-weight="600" fill="#1e40af" text-anchor="middle">MRN</text>
+  <text x="726" y="225" font-size="9.5" fill="#8a93a1">patient demographics</text>
+
+  <rect x="668" y="250" width="184" height="166" rx="8" fill="#fafbfc" stroke="#c8cdd5"/>
+  <text x="682" y="272" font-size="12.5" font-weight="700" fill="#1f2430">Series</text>
+  <rect x="682" y="282" width="150" height="22" rx="11" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="757" y="297" font-size="11" font-weight="600" fill="#0f766e" text-anchor="middle">Series Instance UID</text>
+
+  <rect x="684" y="320" width="152" height="80" rx="8" fill="#ffffff" stroke="#c8cdd5"/>
+  <text x="698" y="342" font-size="12" font-weight="700" fill="#1f2430">Instance</text>
+  <rect x="698" y="352" width="132" height="22" rx="11" fill="#e6faf6" stroke="#5eead4"/>
+  <text x="764" y="367" font-size="10.5" font-weight="600" fill="#0f766e" text-anchor="middle">SOP Instance UID</text>
+
+  <!-- Legend -->
+  <text x="40" y="558" font-size="11" fill="#6b7280">Dashed lines connect the same identifier where it appears in each system.</text>
+</svg>
