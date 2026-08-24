@@ -1,3 +1,14 @@
+<blockquote class="stu-note">
+<p><strong>What changed in this draft.</strong> This revision reframes authorization around the <em>organization's</em> authorization server rather than "the EHR":</p>
+<ul>
+<li><strong>Actors</strong> — "EHR" is replaced by <strong>Authorization Server</strong> (the organization's, typically the EHR's). Token introspection is a function of the authorization server, not a separate endpoint.</li>
+<li><strong>Discovery</strong> — the Imaging Server now publishes its own <code>.well-known/smart-configuration</code> naming the shared authorization server; the clinical endpoint's <code>associated_endpoints</code> listing is organization configuration.</li>
+<li><strong>Authorization</strong> — token validation is SMART Token Introspection, with the Imaging Server as an organization-authorized introspection client; internal validation is allowed when imaging and authorization run as one system. The "other trust arrangements" hedge is gone.</li>
+<li><strong>Unchanged</strong> — Finding studies, Retrieving images, all profiles and examples, scopes, and the 503/Retry-After pattern.</li>
+</ul>
+<p>The certification context for this reshaping is sketched in <a href="separate-certification.html">Separate certification for authorization and data services</a>.</p>
+</blockquote>
+
 Apps can already use [SMART App Launch](https://hl7.org/fhir/smart-app-launch/) to get a patient's clinical data from an EHR. **SMART Imaging Access extends that same authorization to imaging**: with one approval from the user, an app can find a patient's imaging studies and download the DICOM data — no separate imaging login, no second consent screen.
 
 This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers.
