@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 620" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="System map (mobile): the App presents one SMART access token to the EHR (authorization, clinical FHIR, token introspection) and to the Imaging Server (ImagingStudy FHIR endpoint and WADO-RS endpoint); the Imaging Server validates tokens via introspection">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 560" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="System map (mobile): the App presents one SMART access token to the organization's authorization server and clinical FHIR, and to the Imaging Server (ImagingStudy FHIR endpoint and WADO-RS endpoint); the Imaging Server validates tokens via the authorization server's introspection">
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
@@ -17,9 +17,9 @@
   <text x="232" y="128" font-size="10.5" fill="#6b7280">presents its token with every request</text>
 
   <!-- EHR group -->
-  <rect x="40" y="150" width="360" height="240" rx="10" fill="#f5f9ff" stroke="#c4d5f2"/>
-  <text x="60" y="178" font-size="14" font-weight="700" fill="#1d4ed8">EHR</text>
-  <text x="60" y="196" font-size="10.5" fill="#5b6472">SMART on FHIR clinical system</text>
+  <rect x="40" y="150" width="360" height="184" rx="10" fill="#f5f9ff" stroke="#c4d5f2"/>
+  <text x="60" y="178" font-size="14" font-weight="700" fill="#1d4ed8">Organization</text>
+  <text x="60" y="196" font-size="10.5" fill="#5b6472">authorization + clinical — often the EHR</text>
 
   <rect x="60" y="210" width="320" height="48" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
   <text x="220" y="230" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Authorization Server</text>
@@ -29,25 +29,21 @@
   <text x="220" y="286" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Clinical FHIR Server</text>
   <text x="220" y="302" font-size="10.5" fill="#5b6472" text-anchor="middle"><tspan font-weight="700" fill="#2563eb">2 · </tspan>fetch clinical data (optional)</text>
 
-  <rect x="60" y="322" width="320" height="48" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
-  <text x="220" y="342" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Token Introspection</text>
-  <text x="220" y="358" font-size="10.5" fill="#5b6472" text-anchor="middle">validates the app's token for imaging</text>
-
   <!-- Imaging group -->
-  <rect x="40" y="420" width="360" height="180" rx="10" fill="#f0faf8" stroke="#b2ddd5"/>
-  <text x="60" y="448" font-size="14" font-weight="700" fill="#0f766e">Imaging Server</text>
-  <text x="60" y="466" font-size="10.5" fill="#5b6472">may live in the EHR, a PACS proxy, or standalone</text>
+  <rect x="40" y="364" width="360" height="180" rx="10" fill="#f0faf8" stroke="#b2ddd5"/>
+  <text x="60" y="392" font-size="14" font-weight="700" fill="#0f766e">Imaging Server</text>
+  <text x="60" y="410" font-size="10.5" fill="#5b6472">may live in the EHR, a PACS proxy, or standalone</text>
+
+  <rect x="60" y="424" width="320" height="48" rx="7" fill="#ffffff" stroke="#0d9488" stroke-width="1.3"/>
+  <text x="220" y="444" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">ImagingStudy FHIR endpoint</text>
+  <text x="220" y="460" font-size="10.5" fill="#5b6472" text-anchor="middle"><tspan font-weight="700" fill="#0d9488">3 · </tspan>find studies — GET /ImagingStudy?patient=…</text>
 
   <rect x="60" y="480" width="320" height="48" rx="7" fill="#ffffff" stroke="#0d9488" stroke-width="1.3"/>
-  <text x="220" y="500" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">ImagingStudy FHIR endpoint</text>
-  <text x="220" y="516" font-size="10.5" fill="#5b6472" text-anchor="middle"><tspan font-weight="700" fill="#0d9488">3 · </tspan>find studies — GET /ImagingStudy?patient=…</text>
-
-  <rect x="60" y="536" width="320" height="48" rx="7" fill="#ffffff" stroke="#0d9488" stroke-width="1.3"/>
-  <text x="220" y="556" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">WADO-RS endpoint</text>
-  <text x="220" y="572" font-size="10.5" fill="#5b6472" text-anchor="middle"><tspan font-weight="700" fill="#0d9488">4 · </tspan>fetch images — GET /studies/{uid}</text>
+  <text x="220" y="500" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">WADO-RS endpoint</text>
+  <text x="220" y="516" font-size="10.5" fill="#5b6472" text-anchor="middle"><tspan font-weight="700" fill="#0d9488">4 · </tspan>fetch images — GET /studies/{uid}</text>
 
   <!-- Introspection bus -->
-  <path d="M380,560 H412 V346 H386" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4" marker-end="url(#arrg)"/>
-  <path d="M380,504 H412" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>
-  <text x="426" y="430" font-size="10.5" fill="#6b7280" text-anchor="middle" transform="rotate(-90 426 430)">validate token</text>
+  <path d="M380,504 H412 V234 H386" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4" marker-end="url(#arrg)"/>
+  <path d="M380,448 H412" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>
+  <text x="426" y="360" font-size="10.5" fill="#6b7280" text-anchor="middle" transform="rotate(-90 426 360)">validate token</text>
 </svg>

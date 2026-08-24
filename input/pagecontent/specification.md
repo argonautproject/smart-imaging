@@ -1,15 +1,17 @@
-This page is the complete specification: how an App finds an EHR's imaging endpoint, gets authorized, lists a patient's studies, and downloads DICOM data. The actors (App, EHR, Imaging Server) are defined on the [home page](index.html).
+This page is the complete specification: how an app discovers an imaging endpoint, gets authorized, lists a patient's studies, and downloads DICOM data. The actors (App, Authorization Server, Imaging Server) are defined on the [home page](index.html).
 
 ### Discovery
 
-An app learns the imaging endpoint in one of two ways: **in-band**, from the EHR's SMART configuration document, or **out-of-band**, from direct configuration (an endpoint directory, a partner agreement). In-band discovery requires no per-site setup; apps SHOULD prefer it when available and MAY fall back to out-of-band configuration.
+Discovery works from both directions, using ordinary SMART configuration documents.
 
-An EHR supporting in-band discovery SHALL advertise imaging support with the capability string **`smart-imaging-access`** in its `.well-known/smart-configuration`:
+The Imaging Server SHALL publish a SMART configuration document at `[imaging base]/.well-known/smart-configuration` naming the `authorization_endpoint` and `token_endpoint` of the organization's authorization server. An app pointed at the imaging endpoint learns where to authorize exactly as it would at any FHIR endpoint.
 
-* in the top-level `capabilities` array, if the EHR's own FHIR endpoint serves `ImagingStudy` as described here, or
-* in `associated_endpoints[].capabilities`, if a separate FHIR endpoint does.
+The organization's clinical FHIR endpoint advertises imaging alongside clinical data, using the capability string **`smart-imaging-access`** in its own `.well-known/smart-configuration`:
 
-For example, an EHR at `https://ehr.example.org/fhir` whose imaging endpoint is hosted separately at `https://imaging.example.org/fhir` would serve this at `https://ehr.example.org/fhir/.well-known/smart-configuration`:
+* in the top-level `capabilities` array, if that endpoint serves `ImagingStudy` itself, or
+* in `associated_endpoints[].capabilities`, listing the imaging endpoint the organization has attached.
+
+For example, an organization whose clinical FHIR endpoint is `https://ehr.example.org/fhir` and whose imaging endpoint is `https://imaging.example.org/fhir` serves this at `https://ehr.example.org/fhir/.well-known/smart-configuration`:
 
 ```js
 {
@@ -25,20 +27,20 @@ For example, an EHR at `https://ehr.example.org/fhir` whose imaging endpoint is 
 }
 ```
 
-The app reads this document, sees `smart-imaging-access`, and knows it can search `https://imaging.example.org/fhir/ImagingStudy` with the access token it gets from this EHR's authorization server.
+The app reads either document and knows: `https://imaging.example.org/fhir/ImagingStudy` answers to access tokens from the same authorization server the app already uses. Apps SHOULD prefer in-band discovery and MAY fall back to out-of-band configuration (an endpoint directory, a partner agreement).
 
 ### Authorization
 
-One authorization covers everything: the app completes a normal [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) with the EHR, and the resulting access token works for clinical data, `ImagingStudy` search, and DICOM retrieval. There is no separate imaging authorization step and no token exchange.
+One authorization covers everything: the app completes a normal [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) with the organization's authorization server, and the resulting access token works for clinical data, `ImagingStudy` search, and DICOM retrieval. There is no separate imaging authorization step and no token exchange.
 
 <div style="text-align: center; margin: 1.5em 0;">
 <picture>
 <source media="(max-width: 640px)" srcset="sequence-flow-mobile.svg"/>
-<img src="sequence-flow.svg" alt="Sequence diagram: the app authorizes with the EHR, optionally fetches clinical data, searches ImagingStudy on the Imaging Server, and retrieves DICOM data from WADO-RS; the Imaging Server validates the token with the EHR via introspection" style="max-width: 100%; height: auto;"/>
+<img src="sequence-flow.svg" alt="Sequence diagram: the app authorizes with the organization's authorization server, optionally fetches clinical data, searches ImagingStudy on the Imaging Server, and retrieves DICOM data from WADO-RS; the Imaging Server validates the token via introspection" style="max-width: 100%; height: auto;"/>
 </picture>
 </div>
 
-**Obtaining a token.** The app runs a standard SMART App Launch flow (for example, a standalone launch) against the EHR's authorization server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`. The user approves sharing, and the app receives a token response with patient context:
+**Obtaining a token.** The app runs a standard SMART App Launch flow (for example, a standalone launch) against the authorization server named in the endpoint's SMART configuration, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`. The user approves sharing, and the app receives a token response with patient context:
 
 ```js
 {
@@ -51,16 +53,16 @@ One authorization covers everything: the app completes a normal [SMART App Launc
 
 The app then presents this same `access_token` as a Bearer token on every request in this guide: clinical FHIR reads, `ImagingStudy` searches, and WADO-RS retrievals (when the endpoint's `requires-access-token` extension is `true`, which is the expected configuration).
 
-**Trusting the token.** If the Imaging Server is part of the EHR, this is ordinary local token validation. If it's a separate system, it needs a way to check tokens issued by the EHR's authorization server. The expected mechanism is [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html):
+**Validating the token.** The Imaging Server validates every access token through [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html) against the organization's authorization server, which authorizes the Imaging Server as an introspection client when it is deployed:
 
 ```
-POST https://ehr.example.org/introspect
+POST https://auth.example.org/introspect
 Content-Type: application/x-www-form-urlencoded
 
 token=access-token-value-unguessable
 ```
 
-Other trust arrangements (for example, signed tokens the Imaging Server can verify directly) MAY be used, provided the server can enforce the checks below.
+The introspection response carries `active`, `scope`, `client_id`, `exp`, and the `patient` launch context granted with the token — everything the checks below need. An Imaging Server operated as part of the same system as the authorization server MAY validate its tokens internally instead.
 
 **Required checks.** Before serving any imaging request — FHIR or WADO-RS — the Imaging Server SHALL confirm that:
 
@@ -68,14 +70,14 @@ Other trust arrangements (for example, signed tokens the Imaging Server can veri
 2. the token's **patient context matches** the patient whose data is requested — the `?patient=` parameter on a FHIR search, or the patient who owns the study on a WADO-RS retrieval; and
 3. the token's **scopes cover the request** — `patient/ImagingStudy.rs`, `patient/*.read`, or equivalent.
 
-The Imaging Server MAY gather additional information from the EHR to make this decision — for example, using [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/backend-services.html) to fetch `Patient/123` and obtain the patient's identifiers (such as an MRN) for cross-mapping to its own records. See [Imaging Identifiers](identifiers.html) for how these identifiers relate.
+The Imaging Server MAY gather additional information to make this decision — for example, using [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/backend-services.html) to fetch `Patient/123` from the organization's clinical FHIR endpoint and obtain the patient's identifiers (such as an MRN) for cross-mapping to its own records. See [Imaging Identifiers](identifiers.html) for how these identifiers relate.
 
 **Requirements.**
 
-* The **EHR** SHALL support SMART App Launch and SHALL offer scopes permitting `ImagingStudy` read access (`patient/ImagingStudy.rs`, `patient/*.rs`, or the SMART 1.0 equivalents).
-* The **EHR** SHALL provide a way for Imaging Servers to validate its tokens — SMART Token Introspection unless another arrangement is in place.
+* The **Authorization Server** SHALL offer scopes permitting `ImagingStudy` read access (`patient/ImagingStudy.rs`, `patient/*.rs`, or the SMART 1.0 equivalents).
+* The **Authorization Server** SHALL provide token introspection to the organization's authorized resource servers, including the Imaging Server.
 * The **Imaging Server** SHALL validate every access token and enforce patient context and scopes, as above.
-* The **App** SHALL treat the access token as a secret and present it only to the EHR, the Imaging Server's FHIR endpoint, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address` with `requires-access-token` = `true`).
+* The **App** SHALL treat the access token as a secret and present it only to the authorization server, the Imaging Server's FHIR endpoint, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address` with `requires-access-token` = `true`).
 
 ### Finding studies
 

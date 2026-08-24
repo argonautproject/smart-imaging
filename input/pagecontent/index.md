@@ -5,15 +5,15 @@ This helps patients gather their own records, supports second opinions, streamli
 <div style="text-align: center; margin: 1.5em 0;">
 <picture>
 <source media="(max-width: 640px)" srcset="system-map-mobile.svg"/>
-<img src="system-map.svg" alt="System map: an app talks to the EHR for authorization and clinical data, and to the Imaging Server for study metadata and DICOM data" style="max-width: 100%; height: auto;"/>
+<img src="system-map.svg" alt="System map: an app authorizes with the organization's authorization server, queries clinical FHIR, and talks to the Imaging Server for study metadata and DICOM data" style="max-width: 100%; height: auto;"/>
 </picture>
 </div>
 
 ### How it works
 
-1. **Discover** — The app finds the EHR's imaging endpoint, either from the EHR's `.well-known/smart-configuration` or out-of-band configuration. ([Discovery](specification.html#discovery))
-2. **Authorize** — The app completes a normal SMART App Launch flow with the EHR and receives an access token with patient context. ([Authorization](specification.html#authorization))
-3. **Query clinical data** *(optional)* — The app uses the token against the EHR's clinical FHIR server as usual — for example, to fetch the Patient resource or imaging DiagnosticReports.
+1. **Discover** — The app finds the imaging endpoint: listed in the organization's clinical FHIR SMART configuration (`associated_endpoints`), or configured directly. ([Discovery](specification.html#discovery))
+2. **Authorize** — The app completes a normal SMART App Launch flow with the organization's authorization server and receives an access token with patient context. ([Authorization](specification.html#authorization))
+3. **Query clinical data** *(optional)* — The same token works at the organization's clinical FHIR server — for example, to fetch the Patient resource or imaging DiagnosticReports.
 4. **Find studies** — The app searches the imaging endpoint for the patient's `ImagingStudy` resources, each of which links to a WADO-RS endpoint. ([Finding studies](specification.html#finding-studies))
 5. **Fetch images** — The app retrieves DICOM data from the WADO-RS endpoint, presenting the same access token. ([Retrieving images](specification.html#retrieving-images))
 
@@ -21,18 +21,18 @@ This helps patients gather their own records, supports second opinions, streamli
 
 This guide uses three actor names throughout:
 
-* **App** — a user-facing application (patient- or provider-facing) that has completed SMART App Launch with the EHR.
-* **EHR** — the clinical system: a SMART on FHIR authorization server, a token introspection endpoint, and a clinical FHIR server.
-* **Imaging Server** — the imaging system: a FHIR endpoint serving `ImagingStudy` resources, plus one or more DICOM WADO-RS endpoints. It may be part of the EHR, a PACS-vendor service, or a standalone proxy in front of a PACS.
+* **App** — a user-facing application (patient- or provider-facing) that connects through SMART App Launch.
+* **Authorization Server** — the organization's SMART on FHIR authorization server, typically the EHR's. It registers apps, runs the authorization flow, issues tokens, and answers token introspection for the organization's resource servers.
+* **Imaging Server** — the imaging service: a FHIR endpoint serving `ImagingStudy` resources plus one or more DICOM WADO-RS endpoints, validating access tokens through introspection against the Authorization Server. It may be built into the EHR, a PACS product, or a standalone proxy in front of a PACS.
 
-These are roles, not deployment requirements. The `ImagingStudy` resources may live in the EHR's own FHIR server; the WADO-RS endpoint may be a thin proxy over an existing PACS; any combination works as long as the interfaces behave as described.
+These are roles, not products. The `ImagingStudy` resources may live in the EHR's own FHIR server (in which case token validation can be internal); the WADO-RS endpoint may be a thin proxy over an existing PACS; the organization decides what to deploy and connects the pieces by configuration.
 
 ### Scope
 
 In scope:
 
-* Discovering an imaging endpoint associated with an EHR
-* Reusing the EHR-issued SMART access token for imaging requests, with server-side validation (for example, via [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html))
+* Discovering an imaging endpoint associated with an organization's clinical FHIR endpoint
+* One SMART access token, issued by the organization's authorization server and validated by the Imaging Server through [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html)
 * Searching `ImagingStudy` by patient and retrieving DICOM data via WADO-RS
 
 Out of scope (for now):

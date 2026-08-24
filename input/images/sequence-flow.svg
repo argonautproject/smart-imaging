@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 910 750" width="860" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Sequence diagram: the app discovers the imaging endpoint, authorizes with the EHR, optionally fetches clinical data, searches ImagingStudy on the imaging FHIR endpoint, and retrieves DICOM data from WADO-RS; the imaging endpoints validate the token with the EHR via introspection">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 910 750" width="860" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Sequence diagram: the app discovers the imaging endpoint, authorizes with the organization's authorization server, optionally fetches clinical data, searches ImagingStudy on the imaging FHIR endpoint, and retrieves DICOM data from WADO-RS; the imaging endpoints validate the token via introspection">
   <defs>
     <marker id="arrD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#3c4453"/>
@@ -40,12 +40,12 @@
   <text x="110" y="59" font-size="9.5" fill="#5b6472" text-anchor="middle">SMART client</text>
 
   <rect x="255" y="22" width="150" height="46" rx="7" fill="#f5f9ff" stroke="#2563eb" stroke-width="1.4"/>
-  <text x="330" y="44" font-size="12.5" font-weight="700" fill="#1f2430" text-anchor="middle">EHR Authorization</text>
+  <text x="330" y="44" font-size="12.5" font-weight="700" fill="#1f2430" text-anchor="middle">Authorization Server</text>
   <text x="330" y="59" font-size="9.5" fill="#5b6472" text-anchor="middle">authorize · token · introspect</text>
 
   <rect x="450" y="22" width="140" height="46" rx="7" fill="#f5f9ff" stroke="#2563eb" stroke-width="1.4"/>
-  <text x="520" y="44" font-size="12.5" font-weight="700" fill="#1f2430" text-anchor="middle">EHR Clinical FHIR</text>
-  <text x="520" y="59" font-size="9.5" fill="#5b6472" text-anchor="middle">clinical data</text>
+  <text x="520" y="44" font-size="12.5" font-weight="700" fill="#1f2430" text-anchor="middle">Clinical FHIR</text>
+  <text x="520" y="59" font-size="9.5" fill="#5b6472" text-anchor="middle">clinical data (optional)</text>
 
   <rect x="625" y="22" width="140" height="46" rx="7" fill="#f0faf8" stroke="#0d9488" stroke-width="1.4"/>
   <text x="695" y="44" font-size="12.5" font-weight="700" fill="#1f2430" text-anchor="middle">Imaging FHIR</text>

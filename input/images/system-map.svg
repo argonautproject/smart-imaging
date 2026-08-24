@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 500" width="760" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="System map: an App holding one SMART access token talks to the EHR to authorize and fetch clinical data, and to the Imaging Server to find studies and fetch images; the Imaging Server validates tokens against the EHR's introspection endpoint">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 500" width="760" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="System map: an App holding one SMART access token authorizes with the organization's authorization server, optionally fetches clinical data, and talks to the Imaging Server to find studies and fetch images; the Imaging Server validates tokens through the authorization server's token introspection">
   <defs>
     <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
@@ -9,21 +9,17 @@
   </defs>
 
   <!-- EHR group -->
-  <rect x="430" y="30" width="400" height="232" rx="10" fill="#f5f9ff" stroke="#c4d5f2"/>
-  <text x="450" y="58" font-size="15" font-weight="700" fill="#1d4ed8">EHR</text>
-  <text x="450" y="76" font-size="11.5" fill="#5b6472">SMART on FHIR clinical system</text>
+  <rect x="430" y="30" width="400" height="176" rx="10" fill="#f5f9ff" stroke="#c4d5f2"/>
+  <text x="450" y="58" font-size="15" font-weight="700" fill="#1d4ed8">Organization</text>
+  <text x="450" y="76" font-size="11.5" fill="#5b6472">authorization + clinical services — often the EHR</text>
 
   <rect x="450" y="90" width="360" height="48" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
   <text x="630" y="110" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Authorization Server</text>
-  <text x="630" y="126" font-size="10.5" fill="#5b6472" text-anchor="middle">OAuth 2.0 · SMART App Launch</text>
+  <text x="630" y="126" font-size="10.5" fill="#5b6472" text-anchor="middle">OAuth 2.0 · SMART App Launch · token introspection</text>
 
   <rect x="450" y="146" width="360" height="48" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
-  <text x="630" y="166" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Token Introspection</text>
-  <text x="630" y="182" font-size="10.5" fill="#5b6472" text-anchor="middle">validates tokens for imaging</text>
-
-  <rect x="450" y="202" width="360" height="48" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.3"/>
-  <text x="630" y="222" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Clinical FHIR Server</text>
-  <text x="630" y="238" font-size="10.5" fill="#5b6472" text-anchor="middle">Patient · DiagnosticReport · …</text>
+  <text x="630" y="166" font-size="13" font-weight="600" fill="#1f2430" text-anchor="middle">Clinical FHIR Server</text>
+  <text x="630" y="182" font-size="10.5" fill="#5b6472" text-anchor="middle">Patient · DiagnosticReport · … (optional)</text>
 
   <!-- Imaging group -->
   <rect x="430" y="292" width="400" height="178" rx="10" fill="#f0faf8" stroke="#b2ddd5"/>
@@ -46,19 +42,19 @@
 
   <!-- Arrows -->
   <path d="M220,190 L446,114" stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arr)"/>
-  <path d="M220,215 L446,226" stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arr)"/>
+  <path d="M220,215 L446,170" stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arr)"/>
   <path d="M220,240 L446,376" stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arr)"/>
   <path d="M220,265 L446,434" stroke="#6b7280" stroke-width="1.6" fill="none" marker-end="url(#arr)"/>
 
   <!-- Introspection bus -->
-  <path d="M810,434 H848 V170 H818" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4" marker-end="url(#arrg)"/>
+  <path d="M810,434 H848 V114 H818" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4" marker-end="url(#arrg)"/>
   <path d="M810,376 H848" stroke="#8a93a1" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>
   <text x="866" y="273" font-size="11" fill="#6b7280" text-anchor="middle" transform="rotate(-90 866 273)">validate token</text>
 
   <!-- Arrow labels -->
   <g font-size="12.5" font-weight="600" fill="#1f2430" text-anchor="middle" stroke="#ffffff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">
     <text x="333" y="156"><tspan font-weight="700" fill="#2563eb">1 · </tspan>Authorize</text>
-    <text x="333" y="207"><tspan font-weight="700" fill="#2563eb">2 · </tspan>Clinical data (optional)</text>
+    <text x="333" y="182"><tspan font-weight="700" fill="#2563eb">2 · </tspan>Clinical data (optional)</text>
     <text x="345" y="310"><tspan font-weight="700" fill="#0d9488">3 · </tspan>Find studies</text>
     <text x="333" y="352"><tspan font-weight="700" fill="#0d9488">4 · </tspan>Fetch images</text>
   </g>

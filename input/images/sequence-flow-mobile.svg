@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 650" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="The six steps of SMART Imaging Access as a vertical timeline: discover the imaging endpoint, authorize, get the access token, optionally fetch clinical data, find studies, and fetch images; the imaging endpoints introspect the token with the EHR">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 650" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="The six steps of SMART Imaging Access as a vertical timeline: discover the imaging endpoint, authorize, get the access token, optionally fetch clinical data, find studies, and fetch images; the imaging endpoints introspect the token with the authorization server">
   <line x1="36" y1="44" x2="36" y2="600" stroke="#d5dae2" stroke-width="2"/>
 
   <!-- Step 1 -->
   <circle cx="36" cy="48" r="13" fill="#2563eb"/>
   <text x="36" y="52.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
   <text x="64" y="52" font-size="13" font-weight="700" fill="#1f2430">Discover the imaging endpoint</text>
-  <text x="64" y="72" font-size="10.5" font-weight="600" fill="#8a93a1">App → EHR clinical FHIR</text>
+  <text x="64" y="72" font-size="10.5" font-weight="600" fill="#8a93a1">App → clinical FHIR</text>
   <text x="64" y="92" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET …/.well-known/smart-configuration</text>
   <text x="64" y="109" font-size="10.5" fill="#5b6472">→ associated endpoint flagged smart-imaging-access</text>
 
@@ -13,21 +13,21 @@
   <circle cx="36" cy="146" r="13" fill="#2563eb"/>
   <text x="36" y="150.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
   <text x="64" y="150" font-size="13" font-weight="700" fill="#1f2430">Authorize</text>
-  <text x="64" y="170" font-size="10.5" font-weight="600" fill="#8a93a1">App → EHR authorization server</text>
+  <text x="64" y="170" font-size="10.5" font-weight="600" fill="#8a93a1">App → authorization server</text>
   <text x="64" y="190" font-size="10.5" fill="#5b6472">User approves sharing imaging + clinical data</text>
 
   <!-- Step 3 -->
   <circle cx="36" cy="226" r="13" fill="#2563eb"/>
   <text x="36" y="230.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
   <text x="64" y="230" font-size="13" font-weight="700" fill="#1f2430">Get the access token</text>
-  <text x="64" y="250" font-size="10.5" font-weight="600" fill="#8a93a1">App → EHR authorization server</text>
+  <text x="64" y="250" font-size="10.5" font-weight="600" fill="#8a93a1">App → authorization server</text>
   <text x="64" y="270" font-size="10.5" fill="#5b6472">POST /token → access token + patient context</text>
 
   <!-- Step 4 -->
   <circle cx="36" cy="306" r="13" fill="#2563eb"/>
   <text x="36" y="310.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
   <text x="64" y="310" font-size="13" font-weight="700" fill="#1f2430">Fetch clinical data (optional)</text>
-  <text x="64" y="330" font-size="10.5" font-weight="600" fill="#8a93a1">App → EHR clinical FHIR</text>
+  <text x="64" y="330" font-size="10.5" font-weight="600" fill="#8a93a1">App → clinical FHIR</text>
   <text x="64" y="350" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET Patient/123</text>
 
   <!-- Step 5 -->
@@ -37,7 +37,7 @@
   <text x="64" y="410" font-size="10.5" font-weight="600" fill="#8a93a1">App → Imaging FHIR endpoint</text>
   <text x="64" y="430" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET ImagingStudy?patient=123</text>
   <text x="64" y="447" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">    &amp;_include=ImagingStudy:endpoint</text>
-  <text x="64" y="466" font-size="10.5" fill="#6d28d9">server introspects the token with the EHR</text>
+  <text x="64" y="466" font-size="10.5" fill="#6d28d9">server introspects the token with the authorization server</text>
   <text x="64" y="485" font-size="10.5" fill="#5b6472">→ Bundle of studies + WADO-RS endpoints</text>
 
   <!-- Step 6 -->
@@ -46,6 +46,6 @@
   <text x="64" y="530" font-size="13" font-weight="700" fill="#1f2430">Fetch images</text>
   <text x="64" y="550" font-size="10.5" font-weight="600" fill="#8a93a1">App → WADO-RS endpoint</text>
   <text x="64" y="570" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET {address}/studies/{uid}</text>
-  <text x="64" y="589" font-size="10.5" fill="#6d28d9">server introspects the token with the EHR</text>
+  <text x="64" y="589" font-size="10.5" fill="#6d28d9">server introspects the token with the authorization server</text>
   <text x="64" y="608" font-size="10.5" fill="#5b6472">→ DICOM instances (multipart)</text>
 </svg>

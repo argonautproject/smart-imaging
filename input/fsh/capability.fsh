@@ -17,7 +17,7 @@ validates SMART access tokens as described in
 [Authorization](specification.html#authorization).
 """
 * rest[0].mode = #server
-* rest[0].security.description = "Requests carry a SMART on FHIR access token issued by the EHR's authorization server. The Imaging Server validates the token (for example, via SMART Token Introspection) and enforces patient context and scopes."
+* rest[0].security.description = "Requests carry a SMART on FHIR access token issued by the organization's authorization server. The Imaging Server validates the token through SMART Token Introspection (or internally, when operated as one system with the authorization server) and enforces patient context and scopes."
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
