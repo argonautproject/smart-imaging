@@ -335,11 +335,7 @@
   <td class="c nr">— †</td><td class="c nr">—</td><td class="c must">SHALL</td>
 </tr>
 <tr>
-  <td>Org-configured external resource servers — introspection clients + <code>associated_endpoints</code><br/><span class="chip new">New</span> <span class="ftn">fair terms via §170.404</span></td>
-  <td class="c must">SHALL</td><td class="c must">SHALL</td><td class="c nr">—</td>
-</tr>
-<tr>
-  <td>Scopes for attached data — SMART v2 scopes over any FHIR resource type<br/><span class="chip new">New</span> <span class="ftn">generalizes the CCG's non-USCDI scope allowance</span></td>
+  <td>Org-configured external resource servers — introspection clients, <code>associated_endpoints</code>, scopes for their resource types<br/><span class="chip new">New</span> <span class="ftn">fair terms via §170.404</span></td>
   <td class="c must">SHALL</td><td class="c must">SHALL</td><td class="c nr">—</td>
 </tr>
 <tr>
@@ -353,11 +349,10 @@
 
 <h2 class="prose"><span class="no">4</span>Regulatory changes required</h2>
 <div class="prose">
-<p>Four changes, none requiring a new standard:</p>
+<p>Three changes, none requiring a new standard:</p>
 <ol>
   <li><strong>Restructure <code>(g)(10)</code> into two separately certifiable capabilities</strong> — authorization services and data services. A vendor may still certify both together as a single Health IT Module. A standalone data module is tested against a reference authorization server; a standalone authorization module, against a reference data service.</li>
-  <li><strong>Require organization-configured resource servers.</strong> The authorization capability — standalone or within a combined module — must let the deploying organization authorize external resource servers as introspection clients and list them as <code>associated_endpoints</code>, on fair terms under <code>§170.404</code>.</li>
-  <li><strong>Require scope support for attached data.</strong> The authorization flow — request, consent, grant, introspection — must work for SMART v2 scopes over any FHIR resource type (<code>patient/ImagingStudy.rs</code> as readily as <code>patient/Observation.rs</code>). The Certification Companion Guide already permits such scopes for non-USCDI resources; this makes the allowance an obligation.</li>
+  <li><strong>Require organization-configured resource servers.</strong> The authorization capability — standalone or within a combined module — must let the deploying organization authorize external resource servers as introspection clients, list them as <code>associated_endpoints</code>, and grant SMART v2 scopes for the resource types they serve (<code>patient/ImagingStudy.rs</code> as readily as <code>patient/Observation.rs</code>; the Certification Companion Guide already permits such scopes for non-USCDI resources), on fair terms under <code>§170.404</code>.</li>
   <li><strong>Adopt <code>authorization_details</code> via SVAP</strong> once the multi-server grant surface stabilizes.</li>
 </ol>
 <p>No HL7 changes are needed. SMART's token introspection profile already requires the response to include <code>scope</code>, <code>client_id</code>, and <code>exp</code>, plus any launch context (such as <code>patient</code>) granted with the original token. Where ONC wants more — for example, guaranteeing <code>fhirUser</code> for user-scoped tokens — the Certification Companion Guide already articulates requirements above the base specifications, and can do so here.</p>
