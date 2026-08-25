@@ -3,7 +3,7 @@
 <ul>
 <li><strong>Actors</strong> — "EHR" is replaced by <strong>Authorization Server</strong> (the organization's, typically the EHR's). Token introspection is a function of the authorization server, not a separate endpoint.</li>
 <li><strong>Discovery</strong> — the Imaging Server now publishes its own <code>.well-known/smart-configuration</code> naming the shared authorization server; the clinical endpoint's <code>associated_endpoints</code> listing is organization configuration.</li>
-<li><strong>Authorization</strong> — token validation is SMART Token Introspection, with the Imaging Server as an organization-authorized introspection client; internal validation is allowed when imaging and authorization run as one system. The "other trust arrangements" hedge is gone.</li>
+<li><strong>Authorization</strong> — token validation is SMART Token Introspection, with the Imaging Server as an organization-authorized introspection client; internal validation is allowed when imaging and authorization run as one system. The "other trust arrangements" hedge is gone. An optional multi-server grant writeup (<code>authorization_details</code>) shows the token response enumerating imaging locations with per-location patient context.</li>
 <li><strong>Unchanged</strong> — Finding studies, Retrieving images, all profiles and examples, scopes, and the 503/Retry-After pattern.</li>
 </ul>
 <p>The certification context for this reshaping is sketched in <a href="separate-certification.html">Separate certification for authorization and data services</a>.</p>

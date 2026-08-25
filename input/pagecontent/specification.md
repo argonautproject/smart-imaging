@@ -53,6 +53,30 @@ One authorization covers everything: the app completes a normal [SMART App Launc
 
 The app then presents this same `access_token` as a Bearer token on every request in this guide: clinical FHIR reads, `ImagingStudy` searches, and WADO-RS retrievals (when the endpoint's `requires-access-token` extension is `true`, which is the expected configuration).
 
+**Multi-server grants (optional).** An authorization server MAY declare, in the token response itself, the locations where the token is honored, using SMART's experimental [Authorization Details for Multiple Servers](https://build.fhir.org/ig/HL7/smart-app-launch/) (`authorization_details`, [RFC 9396](https://datatracker.ietf.org/doc/html/rfc9396)). Each `smart_on_fhir` entry lists FHIR base URLs in `locations`, with per-location `scope` and `patient` when they differ from the top-level values — useful when the Imaging Server knows the patient under a different identifier than the clinical server:
+
+```js
+{
+  "token_type": "Bearer",
+  "access_token": "access-token-value-unguessable",
+  "expires_in": 3600,
+  "scope": "launch/patient patient/ImagingStudy.rs patient/Patient.rs",
+  "patient": "123",
+  "authorization_details": [{
+    "type": "smart_on_fhir",
+    "locations": ["https://ehr.example.org/fhir"],
+    "fhirVersions": ["4.0.1"]
+  }, {
+    "type": "smart_on_fhir",
+    "locations": ["https://imaging.example.org/fhir"],
+    "fhirVersions": ["4.0.1"],
+    "patient": "imaging-patient-808"
+  }]
+}
+```
+
+When the imaging location carries its own `patient` context, that identifier is the one the Imaging Server's checks below apply, and introspection reflects it. Apps that do not understand `authorization_details` ignore it and rely on [Discovery](#discovery) alone. `locations` entries are FHIR base URLs, so the WADO-RS endpoint continues to be designated by each study's Endpoint with `requires-access-token`, as described in [Finding studies](#finding-studies).
+
 **Validating the token.** The Imaging Server validates every access token through [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html) against the organization's authorization server, which authorizes the Imaging Server as an introspection client when it is deployed:
 
 ```
