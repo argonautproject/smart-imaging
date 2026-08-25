@@ -34,3 +34,7 @@ menu:
   Identifiers: identifiers.html
   Implementations: implementations.html
   Artifacts: artifacts.html
+
+parameters:
+  path-pages:
+    - input/documents

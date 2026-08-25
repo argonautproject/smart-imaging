@@ -230,7 +230,7 @@
 <div class="prose">
 <p>Refactor <code>(g)(10)</code> to certify two module types:</p>
 <ul>
-  <li>An <strong>Authorization module</strong>: registration, SMART App Launch, consent, refresh tokens, revocation, and token introspection — plus the ability for the deploying organization to configure external resource servers, by authorizing them as introspection clients and listing them as <code>associated_endpoints</code> in the discovery document.</li>
+  <li>An <strong>Authorization module</strong>: registration, SMART App Launch, consent, refresh tokens, revocation, and token introspection — plus the ability for the deploying organization to configure external resource servers — authorizing them as introspection clients, listing them as <code>associated_endpoints</code> in the discovery document, and granting the scopes they rely on.</li>
   <li>A <strong>Data module</strong>: serves its data — the clinical FHIR API, or another surface such as imaging's FHIR + DICOMweb — enforcing authorization as an introspection client of a configurable authorization server.</li>
 </ul>
 <p>The data module is a role, not one product. The US&#160;Core clinical API required today is one instance; an imaging module serving <code>ImagingStudy</code> over FHIR and studies over DICOMweb is another; further kinds can follow. The interface the authorization module offers is the same for all of them — an organization can attach any conformant data service, certified or custom.</p>
@@ -339,6 +339,10 @@
   <td class="c must">SHALL</td><td class="c must">SHALL</td><td class="c nr">—</td>
 </tr>
 <tr>
+  <td>Scopes for attached data — SMART v2 scopes over any FHIR resource type<br/><span class="chip new">New</span> <span class="ftn">generalizes the CCG's non-USCDI scope allowance</span></td>
+  <td class="c must">SHALL</td><td class="c must">SHALL</td><td class="c nr">—</td>
+</tr>
+<tr>
   <td><code>authorization_details</code> multi-server grants<br/><span class="chip future">Future</span> <span class="ftn">via SVAP when stable</span></td>
   <td class="c nr">MAY</td><td class="c nr">MAY</td><td class="c nr">MAY</td>
 </tr>
@@ -349,10 +353,11 @@
 
 <h2 class="prose"><span class="no">4</span>Regulatory changes required</h2>
 <div class="prose">
-<p>Three changes, none requiring a new standard:</p>
+<p>Four changes, none requiring a new standard:</p>
 <ol>
   <li><strong>Restructure <code>(g)(10)</code> into two separately certifiable capabilities</strong> — authorization services and data services. A vendor may still certify both together as a single Health IT Module. A standalone data module is tested against a reference authorization server; a standalone authorization module, against a reference data service.</li>
   <li><strong>Require organization-configured resource servers.</strong> The authorization capability — standalone or within a combined module — must let the deploying organization authorize external resource servers as introspection clients and list them as <code>associated_endpoints</code>, on fair terms under <code>§170.404</code>.</li>
+  <li><strong>Require scope support for attached data.</strong> The authorization flow — request, patient consent, grant, introspection — must work for SMART v2 scopes over any FHIR resource type (<code>patient/ImagingStudy.rs</code> as readily as <code>patient/Observation.rs</code>), not only the certified base data set. The Certification Companion Guide already permits scoping non-USCDI resources as <code>patient/[Resource]</code>; this generalizes that allowance into an obligation. Organizations SHOULD also be able to register custom scope strings, with display text for the consent screen, for data a resource-type scope cannot describe.</li>
   <li><strong>Adopt <code>authorization_details</code> via SVAP</strong> once the multi-server grant surface stabilizes.</li>
 </ol>
 <p>No HL7 changes are needed. SMART's token introspection profile already requires the response to include <code>scope</code>, <code>client_id</code>, and <code>exp</code>, plus any launch context (such as <code>patient</code>) granted with the original token. Where ONC wants more — for example, guaranteeing <code>fhirUser</code> for user-scoped tokens — the Certification Companion Guide already articulates requirements above the base specifications, and can do so here.</p>
@@ -360,7 +365,7 @@
 
 <h2 class="prose"><span class="no">5</span>Case study: imaging</h2>
 <div class="prose">
-<p><a href="https://build.fhir.org/ig/argonautproject/smart-imaging/">SMART Imaging Access</a> (Argonaut) is a working data module: it lists a patient's studies as FHIR <code>ImagingStudy</code> resources, serves the underlying data over DICOMweb (WADO-RS), validates the EHR's tokens by introspection, and is discovered through <code>associated_endpoints</code>. What it lacks is regulatory footing — under this split, a PACS vendor gets a test procedure to certify against, and a deploying organization gets the right to attach the result.</p>
+<p><a href="https://build.fhir.org/ig/argonautproject/smart-imaging/">SMART Imaging Access</a> (Argonaut) is a working data module: it lists a patient's studies as FHIR <code>ImagingStudy</code> resources, serves the underlying data over DICOMweb (WADO-RS), validates the EHR's tokens by introspection, and is discovered through <code>associated_endpoints</code>. Its scope needs are met by an ordinary SMART v2 resource scope, <code>patient/ImagingStudy.rs</code>. What it lacks is regulatory footing — under this split, a PACS vendor gets a test procedure to certify against, and a deploying organization gets the right to attach the result.</p>
 </div>
 
 <div class="callout prose">
