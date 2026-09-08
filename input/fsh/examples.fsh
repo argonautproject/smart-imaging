@@ -4,7 +4,7 @@ Instance: patient-example
 InstanceOf: Patient
 Usage: #example
 Title: "Example Patient"
-Description: "A patient with an MRN, as known to the EHR."
+Description: "A patient with an MRN, as known to the Clinical FHIR Server."
 * identifier.system = "http://hospital.example.org/mrn"
 * identifier.value = "8675309"
 * name.family = "Argonaut"
