@@ -4,9 +4,11 @@
 
 The following fictional examples assume that the source organization has already configured the relevant permissions. They illustrate the technical result, not rules about which studies a particular person or service should be allowed to access.
 
-#### A parent using a SMART imaging app
+#### A parent preparing records for a second opinion
 
-Elena uses a SMART imaging app to view her 16-year-old daughter Maya’s images. During SMART authorization, the health system authenticates Elena and recognizes her configured proxy access to Maya’s record. Maya has an ankle X-ray from a sports injury and a pelvic ultrasound from an encounter marked confidential. The health system’s configured policy allows Elena to view the ankle X-ray but excludes the ultrasound from her proxy access.
+Elena uses a SMART-connected app to collect records for an independent orthopedic opinion about her 16-year-old daughter Maya’s ankle injury. The app retrieves the ankle X-ray, its report, and relevant clinical records under Elena’s configured proxy access.
+
+Maya also has a pelvic ultrasound from an encounter marked confidential. The health system’s policy permits Elena to receive the ankle study but excludes the ultrasound from her proxy access.
 
 The app’s token has Maya’s patient context, but that does not grant Elena access to every study belonging to Maya. The ImagingStudy search returns the ankle study and its endpoint, omits the ultrasound, and the retrieval service does not release the ultrasound under Elena’s authorization.
 
