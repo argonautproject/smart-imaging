@@ -10,11 +10,9 @@ Description: "Requirements for a SMART Imaging Access FHIR endpoint."
 * fhirVersion = #4.0.1
 * format = #json
 * description = """
-Requirements for the Imaging FHIR Server, the FHIR function of the Imaging Server. In addition to the FHIR
-behavior described here, the server hosts or links to WADO-RS endpoints as
-described in [Retrieving images](specification.html#retrieving-images), and
-validates SMART access tokens as described in
-[Authorization](specification.html#authorization).
+Requirements for the Imaging FHIR Server. WADO-RS retrieval and SMART token
+validation are specified in [Retrieving images](specification.html#retrieving-images)
+and [Authorization](specification.html#authorization).
 """
 * rest[0].mode = #server
 * rest[0].security.description = """

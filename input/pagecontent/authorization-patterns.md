@@ -2,7 +2,7 @@
 
 ### Example access restrictions
 
-The following fictional examples assume that the source organization has already configured the relevant permissions. They illustrate the technical result, not rules about which studies a particular person or service should be allowed to access.
+These fictional examples use permissions configured by the health system.
 
 #### A parent preparing records for a second opinion
 
@@ -24,9 +24,9 @@ In both cases, the study list and image retrieval need to respect the same acces
 
 The DICOMweb service can combine several sources of information to decide whether to release a requested study:
 
-* **The access token** — The token supplied with the request connects it to a granted authorization. The service validates it rather than assuming that its contents can be read or trusted directly.
+* **Access token** — The credential an app presents to show which authorization it is using. The service checks that the token is valid for the request and uses its validated client identity, scopes, and any supplied patient or user context. An opaque token can be checked through introspection without requiring the service to interpret its contents.
 
-* **A capability URL** — A **capability URL** is a retrieval URL that carries or identifies study-specific permissions bound to the requesting SMART token. The permission may be encoded in protected URL contents or stored by the service under an opaque identifier. The retrieval service validates both the capability and the presented token. An ordinary study URL is not a capability merely because it identifies a study.
+* **Capability URL** — A retrieval URL that carries or identifies study-specific permissions bound to the app’s SMART token. It lets the Imaging FHIR Server pass a release decision to the DICOMweb Server. The permission may be encoded in protected URL contents or stored by the retrieval service under an opaque identifier. The DICOMweb Server validates the token, the capability, and their binding.
 
 * **Token introspection** — The Authorization Server can supply the token’s status, granted scopes, client identity, and available user or patient context. Standard introspection fields do not necessarily express all the study-level restrictions the service needs to enforce.
 
@@ -42,9 +42,7 @@ The client presents the same SMART token for study search and every image retrie
 
 ### Ways to divide authorization responsibilities
 
-The following examples show how cooperating services can divide the work of deciding which studies to release and enforcing those decisions. They can be combined or adapted; none is required by this guide.
-
-Solid arrows in the diagrams show client interactions; dashed arrows show internal coordination. The diagrams start after the client has obtained a SMART token. Token issuance and clinical FHIR access are omitted so the drawings can focus on study-access decisions. The outer boxes group functions: an imaging study service combines Imaging FHIR with study-release policy; a retrieval service provides DICOMweb and retrieval authorization; a gateway can provide both. These labels do not require separate products or additional standardized actors.
+The diagrams show three ways to divide policy evaluation and retrieval enforcement. They begin after token issuance. Solid arrows show client interactions; dashed arrows show internal coordination. Boxes group responsibilities and do not necessarily represent separate products.
 
 #### The gateway evaluates policy and controls retrieval
 
@@ -60,19 +58,15 @@ For Elena’s request, the gateway applies the configured proxy-access restricti
 
 #### The Imaging FHIR Server issues a capability URL; DICOMweb enforces its permissions
 
-In this example, the imaging study service provides Imaging FHIR and evaluates the study-release rules. The Authorization Server supplies validated token context; the imaging study service makes the study-level release decision. An EHR, imaging platform, or independently implemented service could perform that work. The imaging study service evaluates its own policy when answering the study query and returns a capability URL for each permitted study. A separate DICOMweb service validates the capability and enforces its permissions. It can also use token introspection or other checks where the configuration requires them, without reproducing all the policy logic used by the issuer.
+The Imaging FHIR Server evaluates the caller’s permissions and returns a capability URL for each permitted study. The DICOMweb Server validates the capability, the app’s SMART token, and their binding before retrieving images. The services agree how to represent and enforce the permissions carried by the URL.
 
 <div style="margin: 1.5em 0;">
 <img src="authorization-grant.svg" alt="A separate imaging study service evaluates study permissions and returns capability URLs. DICOMweb validates the capabilities before reading the archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
 </div>
 
-*The imaging study service owns the release decision. The DICOMweb service enforces the permissions carried by the capability URL.*
-
-A capability URL could permit retrieval of Maya’s ankle X-ray or Jordan’s cardiac MRI. It would not permit retrieval of the excluded study simply because that study belongs to the same patient.
-
 The client presents the SMART token used for the study search when retrieving images through the capability URL. The DICOMweb Server checks the token's validity, the capability's binding to that token, and all applicable restrictions.
 
-For a capability URL, the Imaging FHIR Server should return a response-local Endpoint entry with a `urn:uuid:...` fullUrl and use that same URN in `ImagingStudy.endpoint.reference`. The client resolves the URN within the search Bundle to obtain the Endpoint's HTTPS address. This keeps the response-specific authorization information in its own resource, with a response-local identity. See the [complete Bundle example](Bundle-imaging-capability-search-response.html).
+Return token-specific Endpoints as response-local Bundle entries, as described in [Finding studies](specification.html#finding-studies). The [Bundle example](Bundle-imaging-capability-search-response.html) shows the UUID reference and HTTPS retrieval address.
 
 The capability is carried in the returned Endpoint’s WADO-RS base URL; the client constructs study and other retrieval paths as specified in [Retrieving images](specification.html#retrieving-images). The issuer and retrieval service agree how to represent and validate capabilities within the guide’s lifetime and access requirements. The service rejects requests that substitute an unauthorized study identifier into a valid retrieval URL.
 
@@ -86,7 +80,7 @@ The Imaging FHIR Server filters the study list, and the DICOMweb Server checks t
 
 *The check uses the original caller’s authorization, not the retrieval service’s broader archive permissions.*
 
-For token-protected retrieval, the DICOMweb Server performs the [required token and access checks](specification.html#authorization), using cooperating services where appropriate. The callback establishes permission for the requested study through an authorized ImagingStudy query or an explicit decision API. The service combines that decision with the token’s scopes, patient context where applicable, and any endpoint-specific restrictions. A service with sufficient token context and local policy can make the decision without the illustrated callback.
+For each retrieval, the DICOMweb Server performs the [required token and access checks](specification.html#authorization), using cooperating services where appropriate. The callback establishes permission for the requested study through an authorized ImagingStudy query or an explicit decision API. The service combines that decision with the token’s scopes, patient context where applicable, and any endpoint-specific restrictions. A service with sufficient token context and local policy can make the decision without the illustrated callback.
 
 The implementation needs to handle unavailable decision services and avoid circular checks—for example, a FHIR query that waits for an archive request that is itself waiting for the same FHIR query.
 

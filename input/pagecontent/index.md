@@ -1,4 +1,4 @@
-Apps can already use SMART authorization to get clinical data. **SMART Imaging Access extends that same authorization to imaging**: an app can find a patient's imaging studies and retrieve the DICOM data using the same SMART access token.
+**SMART Imaging Access lets an app retrieve clinical records, imaging-study metadata, and DICOM images using the same SMART access token.**
 
 This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers.
 

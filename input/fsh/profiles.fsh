@@ -3,11 +3,9 @@ Parent: ImagingStudy
 Id: smart-imaging-study
 Title: "SMART ImagingStudy"
 Description: """
-An ImagingStudy as returned by a SMART Imaging Access server.
-
-Guarantees the two things an app needs from every study: the DICOM Study
-Instance UID (as an identifier) and at least one WADO-RS Endpoint from which
-the study's DICOM data can be retrieved.
+An ImagingStudy returned by a SMART Imaging Access server, with a DICOM Study
+Instance UID identifier and at least one WADO-RS Endpoint for retrieving
+its DICOM data.
 """
 * identifier 1..* MS
 * identifier ^slicing.discriminator.type = #value

@@ -4,7 +4,7 @@
 
 Sharing images between organizations for treatment, referrals, and second opinions is an important use case. SMART Imaging Access provides a building block for that work: a consistent way to access a health system's clinical and imaging data with a common approach to authorization.
 
-Within a health system, clinical records and images often live in separate products. This guide describes how those products cooperate so an app can read clinical data, find imaging studies, and retrieve DICOM data under the same SMART authorization. The app presents the same SMART token for study search and image retrieval. The services can be operated by the health system or by vendors working on its behalf.
+Within a health system, clinical records and images often live in separate products. This guide describes how those products cooperate so an app can retrieve clinical records, study metadata, and images using the same SMART token. The services can be operated by the health system or by vendors working on its behalf.
 
 ### Connecting organizations
 
@@ -31,5 +31,3 @@ These are potential integration contexts; this guide does not specify the adapte
 This guide supports user-facing apps through SMART App Launch and [Backend Services access](specification.html#backend-services) for pre-authorized clients. For example, a referral service could retrieve permitted studies without a user-facing authorization step at the source organization.
 
 Backend Services supplies the token acquisition protocol; organizations still need to establish trust and assign access permissions. Network-wide patient discovery, record location, and importing images into a receiving PACS require additional specifications and agreements. A SMART token issued for one deployment is not automatically valid at another organization.
-
-The aim is to make clinical and imaging data consistently accessible at each participating health system, so broader exchange workflows can build on that capability.

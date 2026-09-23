@@ -40,6 +40,6 @@ curl -L https://github.com/HL7/fhir-ig-publisher/releases/latest/download/publis
 - `input/fsh/` — profiles (SmartImagingStudy, SmartWadoEndpoint),
   server CapabilityStatement, examples
 - `input/pagecontent/` — narrative pages (plain-language spec)
-- `input/images/` — hand-crafted SVG diagrams; each has a `-mobile` variant
-  selected via `<picture>` at narrow widths
+- `input/images/` — native SVG diagrams, with `<picture>` used to select
+  mobile variants where provided
 - `.github/workflows/build.yml` — CI build + GitHub Pages deploy
