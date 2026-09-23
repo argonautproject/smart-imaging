@@ -186,6 +186,10 @@ Authorization: Bearer access-token-value-unguessable
 
 The capability value above is illustrative. Servers SHALL use unguessable or cryptographically protected capabilities, validate their binding to the presented token, and ensure that appending WADO-RS paths cannot grant access beyond the capability's permitted data and operations. Clients SHALL treat returned addresses as opaque base URLs, preserve their capability information when constructing retrieval paths, and protect them from unintended disclosure.
 
+<div class="stu-note" style="border-left: 4px solid #2563eb; background: #f0f6ff; padding: 0.75em 1em; margin: 1em 0;">
+<p><strong>Design question (non-normative):</strong> Should this guide also support bearer capability URLs, where clients are explicitly instructed not to send their SMART access token?</p>
+</div>
+
 **Minimum retrieval support.** The WADO-RS endpoint SHALL support full-study retrieval with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. The response is the study's DICOM instances as a multipart body:
 
 ```
