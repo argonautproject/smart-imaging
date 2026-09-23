@@ -220,7 +220,11 @@ Apps SHOULD degrade gracefully: try the richer request, fall back to full-study 
 
 The retrieval service SHALL check capability validity when accepting each request. A response authorized before expiry MAY finish after expiry. New or retried requests SHALL be checked again.
 
-When a capability has expired, the client can obtain a new Endpoint through an authorized `ImagingStudy` search, refreshing its SMART access token first if necessary. The server evaluates the current authorization before issuing the replacement capability.
+A retrieval request using an expired or revoked URL capability SHALL receive `403 Forbidden`.
+
+**Refreshing a retrieval endpoint.** If DICOM retrieval returns `401 Unauthorized` or `403 Forbidden`, the client can repeat the `ImagingStudy` search for the patient and Study Instance UID, using a valid SMART token and refreshing it first if necessary. The server evaluates the current authorization before returning the study and its Endpoint.
+
+If the search returns the study, the client can retry retrieval using the returned Endpoint and its `requires-access-token` flag. If the study is not returned, or retrieval is again rejected for authorization, the client stops this recovery attempt.
 
 **Credential protection.** Disclosure of a bearer capability URL can disclose access to its permitted data. A token-bound capability URL alone is insufficient without its associated valid token. Clients SHALL protect both forms from unintended disclosure.
 
