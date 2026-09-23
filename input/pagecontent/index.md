@@ -2,18 +2,20 @@ Apps can already use [SMART App Launch](https://hl7.org/fhir/smart-app-launch/) 
 
 This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers.
 
+Deployments can also support [SMART Backend Services](specification.html#backend-services), allowing pre-authorized services to use the same imaging interfaces without a user-facing authorization step. App Launch remains the required baseline.
+
 <div style="text-align: center; margin: 1.5em 0;">
 <picture>
 <source media="(max-width: 640px)" srcset="system-map-mobile.svg"/>
 <img src="system-map.svg" alt="System map: an app authorizes with the Authorization Server, optionally queries the Clinical FHIR Server, and uses the Imaging Server for study metadata and DICOM data; the Imaging Server validates tokens through the Authorization Server's introspection endpoint" style="max-width: 100%; height: auto;"/>
 </picture>
-<p><em>These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
+<p><em>The diagram shows the App Launch baseline. These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
 </div>
 
 ### How it works
 
 1. **Discover** — The app finds the imaging endpoint, either from the clinical FHIR endpoint's `.well-known/smart-configuration` or out-of-band configuration. ([Discovery](specification.html#discovery))
-2. **Authorize** — The app completes a normal SMART App Launch flow with the Authorization Server and receives an access token with patient context. ([Authorization](specification.html#authorization))
+2. **Authorize** — The app completes SMART App Launch and receives an access token with patient context. Where the optional Backend Services mode is supported, a pre-authorized client instead obtains a system-scoped token through SMART Backend Services. ([Authorization](specification.html#authorization))
 3. **Query clinical data** *(optional)* — The app uses the token against the Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
 4. **Find studies** — The app searches the imaging endpoint for the patient's `ImagingStudy` resources, each of which links to a WADO-RS endpoint. ([Finding studies](specification.html#finding-studies))
 5. **Fetch images** — The app retrieves DICOM data from the WADO-RS endpoint, presenting the same access token. ([Retrieving images](specification.html#retrieving-images))
@@ -22,8 +24,9 @@ This helps patients gather their own records, supports second opinions, streamli
 
 This guide uses the following actor names throughout:
 
-* **App** — a user-facing application (patient- or provider-facing) that connects through SMART App Launch.
-* **Authorization Server** — the SMART authorization server configured for the deployment. It supports app registration, user authorization, token issuance and refresh, and token introspection for participating resource servers. It may be provided by an EHR or another service.
+* **App** — a client accessing clinical and imaging data. The baseline is a user-facing application (patient- or provider-facing) connecting through SMART App Launch. Unless stated otherwise, the guide's discovery, search, retrieval, and token-handling requirements apply to Backend Clients too.
+* **Backend Client** — an App using the optional SMART Backend Services mode, with access authorized in advance rather than through a user-facing launch.
+* **Authorization Server** — the SMART authorization server configured for the deployment. It supports app registration, user authorization, token issuance and refresh, and token introspection for participating resource servers. Deployments offering Backend Services also support registration and token issuance for pre-authorized clients. It may be provided by an EHR or another service.
 * **Clinical FHIR Server** — a FHIR service exposing clinical resources such as `Patient`, `DiagnosticReport`, and `ServiceRequest`. Its SMART configuration can advertise imaging endpoints. An app may query it for clinical data as part of an imaging workflow.
 * **Imaging Server** — the imaging system: a FHIR endpoint serving `ImagingStudy` resources, plus one or more DICOM WADO-RS endpoints. It may be part of an EHR, a PACS-vendor service, or a standalone proxy in front of a PACS.
 
@@ -40,12 +43,14 @@ In scope:
 * Discovering an imaging endpoint through SMART configuration or direct configuration
 * Reusing the SMART access token issued by the Authorization Server for imaging requests, with server-side validation (for example, via [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html))
 * Searching `ImagingStudy` by patient and retrieving DICOM data via WADO-RS
+* Optional Backend Services access, with system scopes and enforcement of each client's pre-authorized permissions
 
 Out of scope (for now):
 
 * Writing or uploading imaging data
 * Token exchange for imaging-scoped tokens — deployments that need this may layer it on; future versions may define optional metadata for it
 * DICOM capabilities beyond the minimum retrieval requirements in [Retrieving images](specification.html#retrieving-images)
+* Cross-organization trust agreements, patient matching, record location, and destination-system import workflows
 
 ### History
 

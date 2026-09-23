@@ -1,4 +1,4 @@
-This page is the complete specification: how an App discovers an imaging endpoint, gets authorized, lists a patient's studies, and downloads DICOM data. The actors (App, Authorization Server, Clinical FHIR Server, Imaging Server) are defined on the [home page](index.html).
+This page is the complete specification: how an App discovers an imaging endpoint, gets authorized, lists a patient's studies, and downloads DICOM data. SMART App Launch is the required baseline; [Backend Services](#backend-services) is an optional authorization mode for pre-authorized clients. The actors (App, Backend Client, Authorization Server, Clinical FHIR Server, Imaging Server) are defined on the [home page](index.html).
 
 ### Discovery
 
@@ -27,9 +27,15 @@ For example, a clinical FHIR endpoint at `https://clinical.example.org/fhir` who
 
 The app reads this document, sees `smart-imaging-access`, and knows it can search `https://imaging.example.org/fhir/ImagingStudy` with the access token it gets from the Authorization Server named in the document.
 
+**Optional Backend Services support.** A deployment supporting the [Backend Services mode](#backend-services) SHALL additionally advertise `http://fhir.org/argonaut/smart-imaging/capabilities/backend-services` alongside `smart-imaging-access` for each imaging endpoint supporting that mode. This URI is a capability identifier, not an API endpoint. In the Clinical FHIR Server's `.well-known/smart-configuration`, the capability goes in the top-level or associated endpoint's `capabilities` array as above; `grant_types_supported` and token authentication metadata remain at the top level, describing the advertised Authorization Server. That document SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
+
+Support for `client_credentials` alone does not establish support for backend imaging access. Clients using in-band discovery SHALL check the imaging-specific capability; out-of-band configuration MAY establish the same support explicitly. Advertising support does not grant access to any particular client.
+
 ### Authorization
 
-One authorization covers everything: the app completes a normal [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) with the Authorization Server, and the resulting access token works for clinical data, `ImagingStudy` search, and DICOM retrieval, subject to the granted scopes and patient context. There is no separate imaging authorization step and no token exchange.
+The same access token is used for clinical data, `ImagingStudy` search, and DICOM retrieval, subject to the granted scopes and underlying access permissions. The baseline uses [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) with patient context. Deployments MAY additionally support [SMART Backend Services](#backend-services) for pre-authorized clients. Neither mode requires a separate imaging authorization step or token exchange.
+
+#### App Launch (required)
 
 <div style="text-align: center; margin: 1.5em 0;">
 <picture>
@@ -51,6 +57,33 @@ One authorization covers everything: the app completes a normal [SMART App Launc
 
 The app then presents this same `access_token` as a Bearer token on every request in this guide: clinical FHIR reads, `ImagingStudy` searches, and WADO-RS retrievals (when the endpoint's `requires-access-token` extension is `true`, which is the expected configuration).
 
+<a id="backend-services"></a>
+
+#### Backend Services (optional)
+
+This mode supports clients whose access is authorized in advance by the source organization, such as a referral service retrieving images for patients it is permitted to serve. It uses ordinary patient-specific queries; it does not require bulk export or population-wide search.
+
+**Obtaining a token.** The Backend Client and Authorization Server SHALL follow [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/STU2.2/backend-services.html), including registration, asymmetric client authentication, and the `client_credentials` grant. The client requests `system/ImagingStudy.rs`; deployments supporting this mode SHALL support that scope. A granted wildcard covering the same interactions MAY also be used. Scopes for clinical resources are requested separately as needed, in the same token request.
+
+The resulting access token is used for both study search and DICOM retrieval at the designated endpoints, just as in App Launch. WADO-RS Endpoints returned in this mode SHALL have `requires-access-token` set to `true`. The signed JWT used to authenticate the client at the token endpoint is not the access token and SHALL NOT be used as the bearer token for imaging requests.
+
+**Access permissions.** In this guide, `system/ImagingStudy.rs` permits study search and retrieval of the associated DICOM data only within the client's pre-authorized access. It does not grant access to all patients or all studies. The Authorization Server and participating resource servers SHALL have an arrangement that allows them to enforce the client's applicable access restrictions consistently. How those permissions are assigned and communicated is deployment-specific.
+
+There is no required `patient` launch context in this mode. Each search uses the patient's FHIR logical ID in the source Clinical FHIR Server's namespace (for example, `123` for `Patient/123`), as in the App Launch flow, not an MRN or the receiving organization's patient ID. The Imaging Server maps that identity to its records as described in [Imaging Identifiers](identifiers.html). The search parameter selects data, not permission to access it. Patient matching and discovering which organizations hold records remain outside this guide. Backend use of `patient/` or `user/` scopes is not defined by this optional mode.
+
+**Example (non-normative).** A referral service is registered with the source organization. Its permissions allow study A for patient `123`, but not study B for the same patient or any studies for patient `456`. It obtains a short-lived token with `system/ImagingStudy.rs` using SMART Backend Services.
+
+| Request with that token | Result |
+|---|---|
+| Search `ImagingStudy?patient=123&_include=ImagingStudy:endpoint` | Returns A and its endpoint; omits B |
+| Retrieve A through its WADO-RS endpoint using the same token | Returns A's DICOM data |
+| Request B directly through WADO-RS | Denied; knowing a study UID or URL does not authorize retrieval |
+| Search `ImagingStudy?patient=456` | `403 Forbidden`; this patient is outside the client's authorized access |
+
+If the service also needs clinical reports, it requests an appropriate clinical scope, such as `system/DiagnosticReport.rs`. The Clinical FHIR Server independently enforces the permissions applicable to those reports.
+
+#### Token validation and access enforcement (both modes)
+
 **Trusting the token.** If the Imaging Server and Authorization Server operate as one system, this is ordinary local token validation. If they are separate systems, the Imaging Server needs a way to check tokens issued by the Authorization Server. The expected mechanism is [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html):
 
 ```
@@ -64,18 +97,25 @@ Other trust arrangements (for example, signed tokens the Imaging Server can veri
 
 **Required checks.** Before serving any imaging request — FHIR or WADO-RS — the Imaging Server SHALL confirm that:
 
-1. the token is **active** (not expired or revoked);
-2. the token's **patient context matches** the patient whose data is requested — the `?patient=` parameter on a FHIR search, or the patient who owns the study on a WADO-RS retrieval; and
-3. the token's **scopes cover the request** — `patient/ImagingStudy.rs`, `patient/*.read`, or equivalent.
+1. the token is **active** (not expired or revoked) and issued by the configured Authorization Server for use at this resource server;
+2. the token's **scopes cover the request** — patient-level imaging scopes for the baseline App Launch mode, or system-level imaging scopes for the optional Backend Services mode; and
+3. the request is within the **authorized access**, according to the applicable mode:
+   * **App Launch:** the token's patient context SHALL match the patient whose data is requested — the `?patient=` parameter on a FHIR search, or the patient who owns the study on a WADO-RS retrieval. Any additional access restrictions SHALL also be enforced.
+   * **Backend Services:** the Imaging Server SHALL establish the client identity from validated token information and enforce that client's pre-authorized access, narrowed by the granted scopes, for the requested patient and studies.
 
-The Imaging Server MAY gather additional information from the Clinical FHIR Server to make this decision — for example, using [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/backend-services.html) to fetch `Patient/123` and obtain the patient's identifiers (such as an MRN) for cross-mapping to its own records. See [Imaging Identifiers](identifiers.html) for how these identifiers relate.
+Missing patient context SHALL NOT be treated as authorization for system-level access. A server not supporting the Backend Services mode SHALL NOT grant imaging access on the basis of system scopes. A server SHALL NOT serve data when it cannot establish the applicable permissions. For tokens carrying more than one scope, each grant retains its own context and restrictions; permissions SHALL NOT be broadened by combining the context of one grant with another grant's scope.
+
+SMART introspection returns `client_id` and granted scopes, and patient context when it was issued. It does not define a complete representation of a client's underlying permissions. An active token with `system/ImagingStudy.rs` is therefore insufficient on its own to establish which studies the client may access. Separate Imaging Servers need a policy lookup, shared authorization service, or another arrangement that enforces those permissions.
+
+The Imaging Server MAY gather additional information from the Clinical FHIR Server to make an access decision — for example, using its own [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/backend-services.html) credentials to fetch `Patient/123` and obtain identifiers for cross-mapping. This internal use does not imply support for backend imaging clients and SHALL NOT expand the requesting client's access. See [Imaging Identifiers](identifiers.html).
 
 **Requirements.**
 
 * The **Authorization Server** SHALL support SMART App Launch and SHALL offer scopes permitting `ImagingStudy` read access (`patient/ImagingStudy.rs`, `patient/*.rs`, or the SMART 1.0 equivalents).
 * The **Authorization Server** SHALL provide a way for Imaging Servers to validate its tokens — SMART Token Introspection unless another arrangement is in place.
-* The **Imaging Server** SHALL validate every access token and enforce patient context and scopes, as above.
-* The **App** SHALL treat the access token as a secret and present it only to the Authorization Server, the Clinical FHIR Server covered by the authorization, the Imaging Server's FHIR endpoint, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address` with `requires-access-token` = `true`).
+* Deployments advertising **Backend Services imaging support** SHALL meet the optional mode's discovery, token acquisition, and access-enforcement requirements. This does not replace required App Launch support.
+* The **Imaging Server** SHALL validate every access token and enforce scopes, context where applicable, and underlying access restrictions, as above.
+* The **App**, including a **Backend Client**, SHALL treat the access token as a secret and present it only to the Authorization Server, the Clinical FHIR Server covered by the authorization, the Imaging Server's FHIR endpoint, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address` with `requires-access-token` = `true`). The token SHALL NOT be forwarded to unrelated organizations or arbitrary referenced endpoints.
 
 ### Finding studies
 
@@ -109,7 +149,7 @@ Retry-After: 30
 
 The app SHOULD wait the indicated number of seconds and repeat the identical request. Once results are ready, the server responds normally with the Bundle.
 
-**Access control.** Every search is subject to the token checks in [Authorization](#authorization): the server SHALL ensure the `patient` search parameter matches the token's patient context. A request for another patient's studies gets a `403`, not an empty Bundle.
+**Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the `patient` search parameter SHALL match the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
 
 *Scaling (non-normative).* Passing every search through to an underlying PACS can overload systems that were never built for consumer-scale traffic. Implementations have had good results with caching `ImagingStudy` resources (with a heuristic for invalidation), and with change feeds from the PACS or RIS to invalidate precisely instead of guessing. The 503/Retry-After pattern complements caching: the first request warms the cache; retries hit it.
 
@@ -143,4 +183,6 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 
 Apps SHOULD degrade gracefully: try the richer request, fall back to full-study retrieval if the server doesn't offer it.
 
-The same rules as the FHIR API apply, and the WADO-RS endpoint enforces them itself — a leaked study URL is useless without a valid token. The endpoint SHALL validate the access token and SHALL confirm the requested study belongs to the token's patient before returning any data (see [Authorization](#authorization)). If assembling the data takes time (for example, a C-MOVE from a PACS under the hood), the endpoint MAY respond `503` with a `Retry-After` header, exactly as in [Finding studies](#finding-studies).
+The same access rules as the FHIR API apply, and the WADO-RS endpoint enforces them on every request (see [Authorization](#authorization)). In App Launch mode, the study SHALL belong to the token's patient and satisfy any additional restrictions. In Backend Services mode, the study SHALL be within the client's pre-authorized access and granted scopes. These checks apply to all supported retrieval forms, including metadata, rendered images, and individual instances or frames, whether or not the client previously searched for the study. Knowing a study UID or endpoint URL does not authorize retrieval.
+
+The WADO-RS endpoint SHALL deny requests outside the authorized access without returning DICOM data. A full-study request SHALL NOT return a successful partial study when access restrictions exclude some of its contents; the server SHALL deny that request. If assembling authorized data takes time (for example, a C-MOVE from a PACS under the hood), the endpoint MAY respond `503` with a `Retry-After` header, exactly as in [Finding studies](#finding-studies).

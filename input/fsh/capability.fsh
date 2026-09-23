@@ -5,7 +5,7 @@ Title: "SMART Imaging Access Server"
 Description: "Requirements for a SMART Imaging Access FHIR endpoint."
 * name = "SmartImagingAccessServer"
 * status = #draft
-* date = "2026-08-21"
+* date = "2026-09-23"
 * kind = #requirements
 * fhirVersion = #4.0.1
 * format = #json
@@ -17,7 +17,19 @@ validates SMART access tokens as described in
 [Authorization](specification.html#authorization).
 """
 * rest[0].mode = #server
-* rest[0].security.description = "Requests carry a SMART on FHIR access token issued by the Authorization Server configured for the deployment. The Imaging Server validates the token (for example, via SMART Token Introspection) and enforces patient context and scopes."
+* rest[0].security.description = """
+Requests carry a SMART access token issued by the Authorization Server configured
+for the deployment. SMART App Launch with patient context is the required baseline.
+Deployments MAY additionally support the Backend Services mode defined in
+[Authorization](specification.html#backend-services), advertised by the imaging
+capability http://fhir.org/argonaut/smart-imaging/capabilities/backend-services.
+The Imaging Server validates the token and enforces granted scopes and underlying
+access restrictions. App Launch requests SHALL match the token's patient context.
+Backend Services requests SHALL be limited to the client's pre-authorized access;
+system/ImagingStudy.rs does not grant access to all patients or studies.
+Missing patient context SHALL NOT imply system-level access. The same access
+restrictions SHALL be enforced on FHIR searches and all WADO-RS retrievals.
+"""
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
@@ -25,6 +37,11 @@ The server SHALL support searching ImagingStudy by patient, alone and in
 combination with `_lastUpdated` and `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
 so apps receive the WADO-RS Endpoint for each study, whether contained or external.
+
+Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
+patient-context mismatches and backend requests for unauthorized patients receive
+403 Forbidden. Results and included Endpoints SHALL exclude unauthorized studies.
+Neither authorization mode requires population-wide search.
 
 If results are not yet available (for example, the server is querying an
 underlying PACS), the server MAY respond `503` with a `Retry-After` header;

@@ -4,6 +4,10 @@ FHIR Implementation Guide for **SMART Imaging Access**: apps get a patient's
 imaging studies and DICOM data using the same SMART on FHIR authorization they
 already use for clinical data.
 
+SMART App Launch is the required baseline. An optional SMART Backend Services
+mode supports pre-authorized clients using the same study search and DICOM
+retrieval interfaces, subject to their assigned access permissions.
+
 Grew out of the [Sync for Science imaging spec](https://github.com/sync-for-science/imaging);
 reference implementation and sandbox at <https://github.com/jmandel/smart-imaging>
 and <https://imaging.argo.run>.
