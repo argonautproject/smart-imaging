@@ -33,6 +33,8 @@ In U.S. certified deployments, the Authorization Server role can be supplied by 
 
 ### Scope
 
+See [Connecting Organizations](networks.html) for how this guide can serve as a building block for image exchange between health systems.
+
 In scope:
 
 * Discovering an imaging endpoint through SMART configuration or direct configuration

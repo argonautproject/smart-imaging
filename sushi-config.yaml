@@ -25,6 +25,8 @@ pages:
     title: Specification
   identifiers.md:
     title: Imaging Identifiers
+  networks.md:
+    title: Connecting Organizations
   implementations.md:
     title: Implementations
 
@@ -32,5 +34,6 @@ menu:
   Home: index.html
   Specification: specification.html
   Identifiers: identifiers.html
+  Connecting Organizations: networks.html
   Implementations: implementations.html
   Artifacts: artifacts.html
