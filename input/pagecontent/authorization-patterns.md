@@ -24,7 +24,7 @@ The DICOMweb service can combine several sources of information to decide whethe
 
 * **The access token** — The token supplied with the request connects it to a granted authorization. The service validates it rather than assuming that its contents can be read or trusted directly.
 
-* **A capability URL** — A **capability URL** is a retrieval URL that carries or identifies permission to access specified imaging data. The permission may be encoded in protected URL contents or stored by the service under an opaque identifier. A bearer capability URL is sufficient on its own; a **token-bound capability URL** also requires the associated SMART access token. An ordinary study URL is not a capability merely because it identifies a study.
+* **A capability URL** — A **capability URL** is a retrieval URL that carries or identifies study-specific permissions bound to the requesting SMART token. The permission may be encoded in protected URL contents or stored by the service under an opaque identifier. The retrieval service validates both the capability and the presented token. An ordinary study URL is not a capability merely because it identifies a study.
 
 * **Token introspection** — The Authorization Server can supply the token’s status, granted scopes, client identity, and available user or patient context. Standard introspection fields do not necessarily express all the study-level restrictions the service needs to enforce.
 
@@ -34,9 +34,9 @@ The DICOMweb service can combine several sources of information to decide whethe
 
 * **Locally configured or shared policy** — The service can apply its own configured rules or consult policy shared with the Authorization Server or Imaging FHIR Server. The cooperating systems agree how the relevant permissions and policy changes are communicated and enforced.
 
-These mechanisms can be combined. For example, a DICOMweb service might validate a token through introspection, validate a token-bound capability URL for the requested study, and consult an internal decision service for current consent restrictions. Another might accept a short-lived capability issued after the Imaging FHIR Server has evaluated those restrictions.
+These mechanisms can be combined. For example, a DICOMweb service might validate a token through introspection, validate a token-bound capability URL for the requested study, and consult an internal decision service for current consent restrictions. Another might validate the token and enforce a capability issued after the Imaging FHIR Server has evaluated those restrictions.
 
-The Endpoint’s `requires-access-token` flag specifies whether the client sends its existing SMART token (`true`) or follows the bearer capability URL without it (`false`). The internal decision process is not prescribed by that flag. Both forms work with App Launch and Backend Services.
+The client presents the same SMART token for study search and every image retrieval, using the Endpoint returned by the Imaging FHIR Server. This applies to App Launch and Backend Services; the client does not need to inspect the URL to determine how the server evaluates access.
 
 ### Ways to divide authorization responsibilities
 
@@ -68,13 +68,9 @@ In this example, the imaging study service provides Imaging FHIR and evaluates t
 
 A capability URL could permit retrieval of Maya’s ankle X-ray or Jordan’s cardiac MRI. It would not permit retrieval of the excluded study simply because that study belongs to the same patient.
 
-##### Bearer capability URL
+The client presents the SMART token used for the study search when retrieving images through the capability URL. The DICOMweb Server checks the token's validity, the capability's binding to that token, and all applicable restrictions.
 
-With `requires-access-token = false`, the URL carries sufficient authority for its permitted retrievals. The client does not send its SMART token.
-
-##### Token-bound capability URL
-
-With `requires-access-token = true`, the service requires both the capability URL and the associated SMART token. It checks the capability’s binding to that token as well as the token’s validity and applicable restrictions.
+For a capability URL, the Imaging FHIR Server should return a response-local Endpoint entry with a `urn:uuid:...` fullUrl and use that same URN in `ImagingStudy.endpoint.reference`. The client resolves the URN within the search Bundle to obtain the Endpoint's HTTPS address. This keeps the response-specific authorization information in its own resource, with a response-local identity. See the [complete Bundle example](Bundle-imaging-capability-search-response.html).
 
 The capability is carried in the returned Endpoint’s WADO-RS base URL; the client constructs study and other retrieval paths as specified in [Retrieving images](specification.html#retrieving-images). The issuer and retrieval service agree how to represent and validate capabilities within the guide’s lifetime and access requirements. The service rejects requests that substitute an unauthorized study identifier into a valid retrieval URL.
 
@@ -96,11 +92,11 @@ The implementation needs to handle unavailable decision services and avoid circu
 
 #### Expiry and policy changes
 
-Bearer capability URLs expire no later than the SMART token authorizing their issuance. Document how early revocation affects outstanding bearer capabilities and cached decisions. Token-bound capabilities also require their associated token to remain valid. See the [lifetime and revocation requirements](specification.html#retrieving-images).
+Each retrieval requires a valid SMART token. Capability URLs are also subject to their own expiry and revocation conditions. Document how capabilities expire, how decisions are cached, and how policy changes take effect. A refreshed token may require a new Endpoint from an authorized study search. See the [lifetime and recovery requirements](specification.html#retrieving-images).
 
 #### Audit records
 
-Record the client, any represented user, the patient, and the study. A capability can be correlated with its issuance, but does not independently identify whoever later presents it. Do not expose credentials in logs.
+Record the client, any represented user, the patient, and the study. Correlate the presented token, any capability, and the retrieval decision without exposing credentials in logs.
 
 #### All retrieval paths
 

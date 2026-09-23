@@ -28,15 +28,13 @@ The Imaging Server validates the token and enforces granted scopes and underlyin
 access restrictions. App Launch requests SHALL match the token's patient context.
 Backend Services requests SHALL be limited to the client's pre-authorized access;
 system/ImagingStudy.rs does not grant access to all patients or studies.
-Missing patient context SHALL NOT imply system-level access. In either mode,
-returned WADO-RS Endpoints can require the same SMART token (requires-access-token
-= true) or provide bearer capability URLs to follow without it (false). A
-token-protected URL may also carry a token-bound capability; the DICOMweb Server
-then validates the token, the capability, and their binding and enforces all
-applicable restrictions. Capability issuance SHALL be limited to the data and
-operations authorized by the FHIR request. A bearer capability SHALL expire no
-later than the SMART token authorizing its issuance. Each WADO-RS request SHALL
-enforce the validation, lifetime, and revocation requirements in
+Missing patient context SHALL NOT imply system-level access. Every WADO-RS
+request SHALL carry the same SMART access token used for the authorized FHIR
+request. A returned Endpoint address may be a capability URL; the DICOMweb
+Server then validates the token, the capability, and their binding and enforces
+all applicable restrictions. Capability issuance SHALL be limited to the data
+and operations authorized by the FHIR request. Each retrieval SHALL enforce the
+validation, lifetime, and revocation requirements in
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
@@ -45,7 +43,11 @@ enforce the validation, lifetime, and revocation requirements in
 The server SHALL support searching ImagingStudy by patient, alone and in
 combination with `_lastUpdated` and `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
-so apps receive the WADO-RS Endpoint for each study, whether contained or external.
+so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
+provided as response-local Bundle entries, separately addressable resources
+included in the Bundle, or contained resources. Response-specific capability
+Endpoints SHOULD use urn:uuid fullUrl values; the server SHALL include them on
+the same Bundle page as each referencing study, even without an _include request.
 
 Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
 patient-context mismatches and backend requests for unauthorized patients receive
