@@ -86,6 +86,40 @@ Description: "An MR study that references a standalone WADO-RS Endpoint resource
 * series.instance.number = 1
 * series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.4
 
+// ---------- Study with a capability URL (either authorization mode) ----------
+
+Instance: wado-capability-endpoint-contained
+InstanceOf: SmartWadoEndpoint
+Usage: #inline
+* id = "capability"
+* extension[requiresAccessToken].valueBoolean = false
+* status = #active
+* connectionType = $ConnType#dicom-wado-rs
+* payloadType = $PayloadType#any
+* address = "https://imaging.example.org/wado-capability/opaque-example-capability"
+
+Instance: imaging-study-capability-url
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with a capability URL"
+Description: """
+An alternative authorized response for the CT study, usable with either App Launch
+or Backend Services. The contained Endpoint has requires-access-token = false.
+The client appends the study path to its address and retrieves DICOM data without
+sending the SMART access token. The URL capability grants access only to this study.
+The capability value is illustrative, not a real credential.
+"""
+* contained[0] = wado-capability-endpoint-contained
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
+* status = #available
+* subject = Reference(patient-example)
+* started = "2023-02-24T14:02:49Z"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 1
+* numberOfInstances = 3
+* endpoint.reference = "#capability"
+
 // ---------- Search response Bundle ----------
 
 Instance: imaging-search-response

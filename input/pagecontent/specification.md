@@ -39,7 +39,7 @@ The `smart-imaging-access` capability identifies the imaging interface; it does 
 
 ### Authorization
 
-The same access token is used for clinical data, `ImagingStudy` search, and DICOM retrieval, subject to the granted scopes and underlying access permissions. The guide supports [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) with patient context and [SMART Backend Services](#backend-services) for pre-authorized clients. Deployments SHALL support at least one of these modes and MAY support both. Neither mode requires a separate imaging authorization step or token exchange.
+The SMART access token authorizes clinical FHIR access and `ImagingStudy` search, subject to the granted scopes and underlying access permissions. Each returned WADO-RS Endpoint tells the client whether to present that same token for DICOM retrieval or follow a capability URL without it (see [Retrieving images](#retrieving-images)). Both retrieval patterns apply equally to [SMART App Launch](https://hl7.org/fhir/smart-app-launch/app-launch.html) and [SMART Backend Services](#backend-services). Deployments SHALL support at least one of these authorization modes and MAY support both. Neither retrieval pattern requires a separate user authorization step or a client-side token exchange.
 
 #### App Launch
 
@@ -48,6 +48,7 @@ The same access token is used for clinical data, `ImagingStudy` search, and DICO
 <source media="(max-width: 640px)" srcset="sequence-flow-mobile.svg"/>
 <img src="sequence-flow.svg" alt="Sequence diagram: the app authorizes with the Authorization Server, optionally queries the Clinical FHIR Server, searches ImagingStudy on the Imaging Server, and retrieves DICOM data from WADO-RS; the Imaging Server validates the token with the Authorization Server via introspection" style="max-width: 100%; height: auto;"/>
 </picture>
+<p><em>This example shows App Launch with token-protected WADO-RS retrieval. Either authorization mode can also return capability URLs.</em></p>
 </div>
 
 **Obtaining a token.** The app runs a standard SMART App Launch flow (for example, a standalone launch) against the Authorization Server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`. The user approves sharing, and the app receives a token response with patient context:
@@ -61,7 +62,7 @@ The same access token is used for clinical data, `ImagingStudy` search, and DICO
 }
 ```
 
-The app then presents this same `access_token` as a Bearer token on every request in this guide: clinical FHIR reads, `ImagingStudy` searches, and WADO-RS retrievals (when the endpoint's `requires-access-token` extension is `true`, which is the expected configuration).
+The app presents this `access_token` as a Bearer token for clinical FHIR reads and `ImagingStudy` searches. For WADO-RS retrieval, it follows the returned Endpoint's `requires-access-token` flag as described in [Retrieving images](#retrieving-images).
 
 <a id="backend-services"></a>
 
@@ -71,22 +72,24 @@ This mode supports clients whose access is authorized in advance by the source o
 
 **Obtaining a token.** The Backend Client and Authorization Server SHALL follow [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/STU2.2/backend-services.html), including registration, asymmetric client authentication, and the `client_credentials` grant. The client requests `system/ImagingStudy.rs`; deployments supporting this mode SHALL support that scope. A granted wildcard covering the same interactions MAY also be used. Scopes for clinical resources are requested separately as needed, in the same token request.
 
-The resulting access token is used for both study search and DICOM retrieval at the designated endpoints, just as in App Launch. WADO-RS Endpoints returned in this mode SHALL have `requires-access-token` set to `true`. The signed JWT used to authenticate the client at the token endpoint is not the access token and SHALL NOT be used as the bearer token for imaging requests.
+The resulting access token is used for study search. For DICOM retrieval, the client follows the returned Endpoint's `requires-access-token` flag, just as in App Launch: `true` means present the existing access token; `false` means follow the capability URL without that token. The signed JWT used to authenticate the client at the token endpoint is not the access token and SHALL NOT be used as the bearer token for imaging requests.
 
 **Access permissions.** In this guide, `system/ImagingStudy.rs` permits study search and retrieval of the associated DICOM data only within the client's pre-authorized access. It does not grant access to all patients or all studies. The Authorization Server and participating resource servers SHALL have an arrangement that allows them to enforce the client's applicable access restrictions consistently. How those permissions are assigned and communicated is deployment-specific.
 
 There is no required `patient` launch context in this mode. Each search uses the patient's FHIR logical ID in the source Clinical FHIR Server's namespace (for example, `123` for `Patient/123`), as in the App Launch flow, not an MRN or the receiving organization's patient ID. The Imaging Server maps that identity to its records as described in [Imaging Identifiers](identifiers.html). The search parameter selects data, not permission to access it. Patient matching and discovering which organizations hold records remain outside this guide. Backend use of `patient/` or `user/` scopes is not defined by this mode.
 
-**Example (non-normative).** A referral service is registered with the source organization. Its permissions allow study A for patient `123`, but not study B for the same patient or any studies for patient `456`. It obtains a short-lived token with `system/ImagingStudy.rs` using SMART Backend Services.
+**Example (non-normative).** A referral service is registered with the source organization. Its permissions allow study A for patient `123`, but not study B for the same patient or any studies for patient `456`. It obtains a short-lived token with `system/ImagingStudy.rs` using SMART Backend Services. In this example, A's returned Endpoint has `requires-access-token = true`.
 
 | Request with that token | Result |
 |---|---|
 | Search `ImagingStudy?patient=123&_include=ImagingStudy:endpoint` | Returns A and its endpoint; omits B |
 | Retrieve A through its WADO-RS endpoint using the same token | Returns A's DICOM data |
-| Request B directly through WADO-RS | Denied; knowing a study UID or URL does not authorize retrieval |
+| Request B directly through the token-protected WADO-RS endpoint | Denied; the token does not authorize B |
 | Search `ImagingStudy?patient=456` | `403 Forbidden`; this patient is outside the client's authorized access |
 
 If the service also needs clinical reports, it requests an appropriate clinical scope, such as `system/DiagnosticReport.rs`. The Clinical FHIR Server independently enforces the permissions applicable to those reports.
+
+Alternatively, the authorized search could return a capability URL for A with `requires-access-token = false`. The service retrieves A without sending its SMART token. The capability grants access to A, not B; changing the requested study does not broaden that grant.
 
 #### Token validation and access enforcement (both modes)
 
@@ -101,7 +104,7 @@ token=access-token-value-unguessable
 
 Other trust arrangements (for example, signed tokens the Imaging Server can verify directly) MAY be used, provided the server can enforce the checks below.
 
-**Required checks.** Before serving any imaging request — FHIR or WADO-RS — the Imaging Server SHALL confirm that:
+**Required token checks.** Before serving an imaging FHIR request or a WADO-RS request with `requires-access-token = true`, the Imaging Server SHALL confirm that:
 
 1. the token is **active** (not expired or revoked) and issued by the configured Authorization Server for use at this resource server;
 2. the token's **scopes cover the request** — patient-level imaging scopes for App Launch mode, or system-level imaging scopes for Backend Services mode; and
@@ -113,6 +116,8 @@ Missing patient context SHALL NOT be treated as authorization for system-level a
 
 SMART introspection returns `client_id` and granted scopes, and patient context when it was issued. It does not define a complete representation of a client's underlying permissions. An active token with `system/ImagingStudy.rs` is therefore insufficient on its own to establish which studies the client may access. Separate Imaging Servers need a policy lookup, shared authorization service, or another arrangement that enforces those permissions.
 
+**Issuing capability URLs.** Before returning an Endpoint with `requires-access-token = false`, the Imaging Server SHALL perform the token and access checks above on the FHIR request and limit the capability to data and retrieval operations authorized by that request. The retrieval service then validates the capability rather than requiring the original SMART token. See [Retrieving images](#retrieving-images) for capability validation and lifetime considerations.
+
 The Imaging Server MAY gather additional information from the Clinical FHIR Server to make an access decision — for example, using its own [SMART Backend Services](https://hl7.org/fhir/smart-app-launch/backend-services.html) credentials to fetch `Patient/123` and obtain identifiers for cross-mapping. This internal use does not imply support for backend imaging clients and SHALL NOT expand the requesting client's access. See [Imaging Identifiers](identifiers.html).
 
 **Requirements.**
@@ -120,7 +125,7 @@ The Imaging Server MAY gather additional information from the Clinical FHIR Serv
 * For deployments supporting **App Launch**, the **Authorization Server** SHALL support SMART App Launch and SHALL offer scopes permitting `ImagingStudy` read access (`patient/ImagingStudy.rs`, `patient/*.rs`, or the SMART 1.0 equivalents).
 * The **Authorization Server** SHALL provide a way for Imaging Servers to validate its tokens — SMART Token Introspection unless another arrangement is in place.
 * Deployments advertising **Backend Services imaging support** SHALL meet that mode's discovery, token acquisition, and access-enforcement requirements. App Launch support is not required for a Backend Services-only deployment.
-* The **Imaging Server** SHALL validate every access token and enforce scopes, context where applicable, and underlying access restrictions, as above.
+* The **Imaging Server** SHALL enforce the token checks and capability-issuance rules above. Each WADO-RS request SHALL be authorized using either the SMART token or the URL capability, according to the returned Endpoint.
 * The **App**, including a **Backend Client**, SHALL treat the access token as a secret and present it only to the Authorization Server, the Clinical FHIR Server covered by the authorization, the Imaging Server's FHIR endpoint, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address` with `requires-access-token` = `true`). The token SHALL NOT be forwarded to unrelated organizations or arbitrary referenced endpoints.
 
 ### Finding studies
@@ -142,9 +147,9 @@ The Imaging Server SHALL support these search parameter combinations:
 
 The server SHALL also support `_include=ImagingStudy:endpoint`, so that studies whose Endpoints are standalone resources come back in the same Bundle. Endpoints MAY instead be contained within each `ImagingStudy`; apps SHALL support both forms. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable version.
 
-The server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**, and at least one **endpoint** conforming to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html) — the WADO-RS base URL where the DICOM data lives, plus a `requires-access-token` flag telling the app to send its SMART token there. Studies should also carry descriptive detail when available — start time, series and instance counts, per-series metadata — so apps can show a useful study list before downloading anything.
+The server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**, and at least one **endpoint** conforming to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html) — the WADO-RS base URL where the DICOM data lives, plus a `requires-access-token` flag telling the app whether to send its SMART token there. Studies should also carry descriptive detail when available — start time, series and instance counts, per-series metadata — so apps can show a useful study list before downloading anything.
 
-Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
+Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [study with a capability URL](ImagingStudy-imaging-study-capability-url.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
 
 **Slow backends: 503 + Retry-After.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request. Rather than holding the connection open, the server MAY respond:
 
@@ -161,13 +166,31 @@ The app SHOULD wait the indicated number of seconds and repeat the identical req
 
 ### Retrieving images
 
-Each study's Endpoint gives the app a WADO-RS base URL in `Endpoint.address`. The app appends `/studies/{Study Instance UID}` — using the plain UID from the study's `urn:dicom:uid` identifier (strip the `urn:oid:` prefix) — and sends its SMART access token:
+Each study's Endpoint gives the app a WADO-RS base URL in `Endpoint.address`. The app appends `/studies/{Study Instance UID}` — using the plain UID from the study's `urn:dicom:uid` identifier (strip the `urn:oid:` prefix). The Endpoint's `requires-access-token` flag determines how the request is authorized:
+
+| `requires-access-token` | Client behavior |
+|---|---|
+| `true` | The client SHALL send the same SMART access token used for the authorized FHIR request as a Bearer token. |
+| `false` | The URL carries the retrieval capability. The client SHALL follow it without sending its SMART access token. |
+
+Clients SHALL support both forms, regardless of whether they obtained their token through App Launch or Backend Services. `false` does not mean the images are public: possession of the capability URL grants access. Clients SHALL treat capability URLs as credentials and protect them from unintended disclosure, including through logs or referrer headers.
+
+For a token-protected endpoint:
 
 ```
 GET https://imaging.example.org/wado-rs/studies/1.2.840.99999999.19341866.1571297684
 Accept: multipart/related; type=application/dicom; transfer-syntax=*
 Authorization: Bearer access-token-value-unguessable
 ```
+
+For a capability endpoint whose base URL is `https://imaging.example.org/wado-capability/opaque-example-capability`, the corresponding request has no SMART Authorization header:
+
+```
+GET https://imaging.example.org/wado-capability/opaque-example-capability/studies/1.2.840.99999999.19341866.1571297684
+Accept: multipart/related; type=application/dicom; transfer-syntax=*
+```
+
+The capability value above is illustrative. Servers SHALL use unguessable or cryptographically protected capabilities and SHALL ensure that appending WADO-RS paths cannot grant access beyond the capability's authorized data and operations.
 
 **Minimum retrieval support.** The WADO-RS endpoint SHALL support full-study retrieval with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. The response is the study's DICOM instances as a multipart body:
 
@@ -189,6 +212,8 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 
 Apps SHOULD degrade gracefully: try the richer request, fall back to full-study retrieval if the server doesn't offer it.
 
-The same access rules as the FHIR API apply, and the WADO-RS endpoint enforces them on every request (see [Authorization](#authorization)). In App Launch mode, the study SHALL belong to the token's patient and satisfy any additional restrictions. In Backend Services mode, the study SHALL be within the client's pre-authorized access and granted scopes. These checks apply to all supported retrieval forms, including metadata, rendered images, and individual instances or frames, whether or not the client previously searched for the study. Knowing a study UID or endpoint URL does not authorize retrieval.
+**Retrieval authorization.** For `requires-access-token = true`, the WADO-RS endpoint SHALL perform the token and access checks in [Authorization](#authorization) on every request, whether or not the client previously searched for the study. For `false`, the endpoint SHALL validate the capability and enforce its authorized data, operations, and any expiry or revocation conditions on every request. Both forms apply to all supported retrievals, including metadata, rendered images, individual instances, and frames.
+
+Capability URLs SHOULD be short-lived. Servers SHALL document their lifetime and revocation behavior; expiry or revocation of the original SMART token does not by itself imply expiry or revocation of an issued capability. Clients can obtain a new URL through another authorized FHIR request when necessary. A leaked capability URL can grant access to its data without the SMART token.
 
 The WADO-RS endpoint SHALL deny requests outside the authorized access without returning DICOM data. A full-study request SHALL NOT return a successful partial study when access restrictions exclude some of its contents; the server SHALL deny that request. If assembling authorized data takes time (for example, a C-MOVE from a PACS under the hood), the endpoint MAY respond `503` with a `Retry-After` header, exactly as in [Finding studies](#finding-studies).

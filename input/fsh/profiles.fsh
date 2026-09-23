@@ -9,6 +9,11 @@ When `true` on a WADO-RS Endpoint returned by a SMART Imaging Access server,
 the app presents the same SMART access token it used for the ImagingStudy
 search when it retrieves DICOM data from the endpoint.
 
+When `false`, the endpoint URL carries the retrieval capability and the app
+follows it without sending its SMART access token. The URL is a credential,
+not an indication that the data is public. Both values apply equally to
+SMART App Launch and SMART Backend Services.
+
 This mirrors the `requiresAccessToken` concept from the
 [FHIR Asynchronous Bulk Data Request Pattern](https://hl7.org/fhir/async-bulk.html),
 expressed as an extension so it can travel on an Endpoint resource.
@@ -70,7 +75,9 @@ A DICOM WADO-RS endpoint referenced from a SMART ImagingStudy.
 The `address` is a WADO-RS base URL: the app appends
 `/studies/{Study Instance UID}` (and optionally deeper paths) to retrieve
 DICOM data. The `requires-access-token` extension says whether the app
-presents its SMART access token on those requests.
+presents its SMART access token on those requests (`true`) or follows a
+capability URL without that token (`false`). Both forms can be returned
+for clients using either SMART App Launch or SMART Backend Services.
 """
 * status MS
 * connectionType MS

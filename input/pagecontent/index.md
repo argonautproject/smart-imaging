@@ -1,4 +1,4 @@
-Apps can already use SMART authorization to get clinical data. **SMART Imaging Access extends that same authorization to imaging**: an app can find a patient's imaging studies and download the DICOM data using the same access token.
+Apps can already use SMART authorization to get clinical data. **SMART Imaging Access extends that same authorization to imaging**: an app can find a patient's imaging studies and retrieve the DICOM data using its existing access token or a capability URL returned by the authorized FHIR request.
 
 This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers.
 
@@ -9,7 +9,7 @@ The guide supports both [SMART App Launch](specification.html#app-launch), for u
 <source media="(max-width: 640px)" srcset="system-map-mobile.svg"/>
 <img src="system-map.svg" alt="System map: an app authorizes with the Authorization Server, optionally queries the Clinical FHIR Server, and uses the Imaging Server for study metadata and DICOM data; the Imaging Server validates tokens through the Authorization Server's introspection endpoint" style="max-width: 100%; height: auto;"/>
 </picture>
-<p><em>The diagram illustrates App Launch. These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
+<p><em>The diagram illustrates App Launch with token-protected retrieval. Either authorization mode can also return capability URLs. These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
 </div>
 
 ### How it works
@@ -18,7 +18,7 @@ The guide supports both [SMART App Launch](specification.html#app-launch), for u
 2. **Authorize** — The app completes SMART App Launch and receives an access token with patient context. Where Backend Services is supported, a pre-authorized client instead obtains a system-scoped token through SMART Backend Services. ([Authorization](specification.html#authorization))
 3. **Query clinical data** *(optional)* — The app uses the token against the Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
 4. **Find studies** — The app searches the imaging endpoint for the patient's `ImagingStudy` resources, each of which links to a WADO-RS endpoint. ([Finding studies](specification.html#finding-studies))
-5. **Fetch images** — The app retrieves DICOM data from the WADO-RS endpoint, presenting the same access token. ([Retrieving images](specification.html#retrieving-images))
+5. **Fetch images** — The app checks the Endpoint's `requires-access-token` flag: `true` means send the existing SMART token; `false` means follow the capability URL without it. ([Retrieving images](specification.html#retrieving-images))
 
 ### Actors
 
@@ -42,6 +42,7 @@ In scope:
 
 * Discovering an imaging endpoint through SMART configuration or direct configuration
 * Reusing the SMART access token issued by the Authorization Server for imaging requests, with server-side validation (for example, via [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html))
+* Returning capability URLs for DICOM retrieval without forwarding the SMART token, in either authorization mode
 * Searching `ImagingStudy` by patient and retrieving DICOM data via WADO-RS
 * Backend Services access, with system scopes and enforcement of each client's pre-authorized permissions
 

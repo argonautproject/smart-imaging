@@ -7,6 +7,8 @@ already use for clinical data.
 The guide supports both SMART App Launch and SMART Backend Services. Deployments
 can support either or both patterns, using the same study search and DICOM
 retrieval interfaces subject to the applicable access permissions.
+In either pattern, returned imaging endpoints tell clients whether to send their
+existing SMART token or follow a capability URL without it.
 
 Grew out of the [Sync for Science imaging spec](https://github.com/sync-for-science/imaging);
 reference implementation and sandbox at <https://github.com/jmandel/smart-imaging>

@@ -18,7 +18,7 @@ validates SMART access tokens as described in
 """
 * rest[0].mode = #server
 * rest[0].security.description = """
-Requests carry a SMART access token issued by the Authorization Server configured
+FHIR requests carry a SMART access token issued by the Authorization Server configured
 for the deployment. Deployments SHALL support SMART App Launch, SMART Backend
 Services, or both, as defined in [Authorization](specification.html#authorization).
 Supported modes are advertised for each imaging endpoint with the corresponding
@@ -28,8 +28,12 @@ The Imaging Server validates the token and enforces granted scopes and underlyin
 access restrictions. App Launch requests SHALL match the token's patient context.
 Backend Services requests SHALL be limited to the client's pre-authorized access;
 system/ImagingStudy.rs does not grant access to all patients or studies.
-Missing patient context SHALL NOT imply system-level access. The same access
-restrictions SHALL be enforced on FHIR searches and all WADO-RS retrievals.
+Missing patient context SHALL NOT imply system-level access. In either mode,
+returned WADO-RS Endpoints can require the same SMART token (requires-access-token
+= true) or provide capability URLs to follow without it (false). Capability
+issuance SHALL be limited to the data and operations authorized by the FHIR
+request. Each WADO-RS request SHALL validate either the SMART token or the
+capability, as described in [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
