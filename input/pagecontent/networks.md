@@ -28,7 +28,7 @@ These are potential integration contexts; this guide does not specify the adapte
 
 ### Work beyond this guide
 
-This guide supports user-facing apps through SMART App Launch and defines optional [Backend Services access](specification.html#backend-services) for pre-authorized clients. For example, a referral service could retrieve permitted studies without a user-facing authorization step at the source organization.
+This guide supports user-facing apps through SMART App Launch and [Backend Services access](specification.html#backend-services) for pre-authorized clients. For example, a referral service could retrieve permitted studies without a user-facing authorization step at the source organization.
 
 Backend Services supplies the token acquisition protocol; organizations still need to establish trust and assign access permissions. Network-wide patient discovery, record location, and importing images into a receiving PACS require additional specifications and agreements. A SMART token issued for one deployment is not automatically valid at another organization.
 

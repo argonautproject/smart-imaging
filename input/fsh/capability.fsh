@@ -19,10 +19,11 @@ validates SMART access tokens as described in
 * rest[0].mode = #server
 * rest[0].security.description = """
 Requests carry a SMART access token issued by the Authorization Server configured
-for the deployment. SMART App Launch with patient context is the required baseline.
-Deployments MAY additionally support the Backend Services mode defined in
-[Authorization](specification.html#backend-services), advertised by the imaging
-capability http://fhir.org/argonaut/smart-imaging/capabilities/backend-services.
+for the deployment. Deployments SHALL support SMART App Launch, SMART Backend
+Services, or both, as defined in [Authorization](specification.html#authorization).
+Supported modes are advertised for each imaging endpoint with the corresponding
+capability http://fhir.org/argonaut/smart-imaging/capabilities/app-launch or
+http://fhir.org/argonaut/smart-imaging/capabilities/backend-services (or both).
 The Imaging Server validates the token and enforces granted scopes and underlying
 access restrictions. App Launch requests SHALL match the token's patient context.
 Backend Services requests SHALL be limited to the client's pre-authorized access;
