@@ -1,20 +1,4 @@
-*This page is non-normative.* It describes ways for cooperating systems to apply an organization's access policies to study discovery and image retrieval.
-
-### Functional roles
-
-The names below describe functions and interfaces, not particular products or vendors. The *Imaging Server* role comprises the Imaging FHIR Server and DICOMweb Server functions defined on the [home page](index.html#actors).
-
-* **Authorization Server** — issues SMART access tokens and provides validated information about their scopes and authorization context.
-
-* **Clinical FHIR Server** — serves clinical resources such as `Patient` and `DiagnosticReport`.
-
-* **Imaging FHIR Server** — serves `ImagingStudy` resources and the Endpoints that tell clients where and how to retrieve images.
-
-* **DICOMweb Server** — serves the images through those endpoints, enforcing the applicable token or capability-based authorization.
-
-A product can implement several roles, and cooperating products can implement them separately. For example, an EHR or a standalone authorization service could provide the Authorization Server; an EHR, imaging platform, or adapter could provide Imaging FHIR; and a PACS, archive service, or gateway could provide DICOMweb. These are possible implementations, not assignments of responsibility.
-
-Study-access policy is a function that can be evaluated alongside any of these roles or by a shared decision service. Its location is an implementation choice; the Authorization Server need not make every study-level decision.
+*This page is non-normative.* Using the [functional roles defined on the home page](index.html#actors), it describes how cooperating services decide which studies to release and enforce those decisions during image retrieval.
 
 ### Example access restrictions
 
@@ -64,8 +48,8 @@ Solid arrows in the diagrams show client interactions; dashed arrows show intern
 
 A gateway provides both the Imaging FHIR Server and DICOMweb Server. It combines token validation, such as introspection, with locally configured or shared policy. It uses those permissions to filter the study list and check each image request before retrieving data from an internal image archive, such as a PACS.
 
-<div style="overflow-x: auto; margin: 1.5em 0;">
-<img src="authorization-gateway.svg" alt="A gateway hosts Imaging FHIR and DICOMweb. Both use its study-access policy; DICOMweb controls retrieval from an internal image archive." style="width: 100%; min-width: 760px; height: auto;"/>
+<div style="margin: 1.5em 0;">
+<img src="authorization-gateway.svg" alt="A gateway hosts Imaging FHIR and DICOMweb. Both use its study-access policy; DICOMweb controls retrieval from an internal image archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
 </div>
 
 *The gateway provides both imaging roles. Its access to the archive is separate from the client’s access to the gateway.*
@@ -76,8 +60,8 @@ For Elena’s request, the gateway applies the configured proxy-access restricti
 
 In this example, the imaging study service provides Imaging FHIR and evaluates the study-release rules. The Authorization Server supplies validated token context; the imaging study service makes the study-level release decision. An EHR, imaging platform, or independently implemented service could perform that work. The imaging study service evaluates its own policy when answering the study query and returns a capability URL for each permitted study. A separate DICOMweb service validates the capability and enforces its permissions. It can also use token introspection or other checks where the configuration requires them, without reproducing all the policy logic used by the issuer.
 
-<div style="overflow-x: auto; margin: 1.5em 0;">
-<img src="authorization-grant.svg" alt="A separate imaging study service evaluates study permissions and returns capability URLs. DICOMweb validates the capabilities before reading the archive." style="width: 100%; min-width: 760px; height: auto;"/>
+<div style="margin: 1.5em 0;">
+<img src="authorization-grant.svg" alt="A separate imaging study service evaluates study permissions and returns capability URLs. DICOMweb validates the capabilities before reading the archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
 </div>
 
 *The imaging study service owns the release decision. The DICOMweb service enforces the permissions carried by the capability URL.*
@@ -98,8 +82,8 @@ The capability is carried in the returned Endpoint’s WADO-RS base URL; the cli
 
 The Imaging FHIR Server filters the study list, and the DICOMweb Server checks the caller’s permission when an image request arrives. In the diagram, it asks the system responsible for study-access decisions before reading the archive.
 
-<div style="overflow-x: auto; margin: 1.5em 0;">
-<img src="authorization-recheck.svg" alt="The DICOMweb Server asks the imaging study service to check access for the original caller and requested study before releasing data from the image archive." style="width: 100%; min-width: 760px; height: auto;"/>
+<div style="margin: 1.5em 0;">
+<img src="authorization-recheck.svg" alt="The DICOMweb Server asks the imaging study service to check access for the original caller and requested study before releasing data from the image archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
 </div>
 
 *The check uses the original caller’s authorization, not the retrieval service’s broader archive permissions.*
