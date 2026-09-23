@@ -12,13 +12,13 @@ Maya also has a pelvic ultrasound from an encounter marked confidential. The hea
 
 The app’s token has Maya’s patient context, but that does not grant Elena access to every study belonging to Maya. The ImagingStudy search returns the ankle study and its endpoint, omits the ultrasound, and the retrieval service does not release the ultrasound under Elena’s authorization.
 
-#### A cardiology registry receiving cardiac studies
+#### A health system running a cardiac imaging quality-review service
 
-A health system permits an external cardiology registry to receive cardiac imaging studies for patients participating in the registry. The registry is not permitted to receive their non-cardiac studies or images belonging to patients who are not participating.
+A health system runs a background service that collects newly available cardiac images and reports for continuous quality improvement. The service uses SMART Backend Services. The health system configures its permissions to cover cardiac studies for patients included in the program.
 
-Jordan Ellis participates in the registry and has a cardiac MRI and a knee X-ray. The registry may receive Jordan’s cardiac MRI, but not the knee X-ray. It connects using SMART Backend Services; a token with `system/ImagingStudy.rs` remains subject to the health system’s configured restrictions on what the registry may receive.
+Jordan Ellis is included in the program and has a cardiac MRI and a knee X-ray. The service is permitted to retrieve the cardiac MRI, but not the knee X-ray. Its `system/ImagingStudy.rs` scope remains subject to those configured permissions.
 
-In both cases, the study list and image retrieval need to respect the same access restriction. The client does not need an in-band representation of the organization’s proxy-access rules, consent records, or registry-sharing policies.
+In both cases, the study list and image retrieval need to respect the same access restriction. The client does not need an in-band representation of the organization’s proxy-access rules, consent records, or quality-review program permissions.
 
 ### Authorizing a DICOMweb request
 
@@ -56,7 +56,7 @@ A gateway provides both the Imaging FHIR Server and DICOMweb Server. It combines
 
 *The gateway provides both imaging roles. Its access to the archive is separate from the client’s access to the gateway.*
 
-For Elena’s request, the gateway applies the configured proxy-access restrictions. For the registry’s request, it applies the health system’s cardiac-study sharing policy. Its own archive credentials may allow broader access, but it releases only what the requesting client is permitted to retrieve. Other client-accessible routes must not bypass that enforcement.
+For Elena’s request, the gateway applies the configured proxy-access restrictions. For the quality-review service’s request, it applies the health system’s configured cardiac-study permissions. Its own archive credentials may allow broader access, but it releases only what the requesting client is permitted to retrieve. Other client-accessible routes must not bypass that enforcement.
 
 #### The Imaging FHIR Server issues a capability URL; DICOMweb enforces its permissions
 
