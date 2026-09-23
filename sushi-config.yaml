@@ -27,6 +27,8 @@ pages:
     title: Imaging Identifiers
   networks.md:
     title: Connecting Organizations
+  authorization-patterns.md:
+    title: Implementing Study-Level Authorization
   implementations.md:
     title: Implementations
 
@@ -35,5 +37,6 @@ menu:
   Specification: specification.html
   Identifiers: identifiers.html
   Connecting Organizations: networks.html
+  Authorization Patterns: authorization-patterns.html
   Implementations: implementations.html
   Artifacts: artifacts.html

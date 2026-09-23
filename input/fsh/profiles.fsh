@@ -7,12 +7,17 @@ access token that authorized the request which returned the endpoint.
 
 When `true` on a WADO-RS Endpoint returned by a SMART Imaging Access server,
 the app presents the same SMART access token it used for the ImagingStudy
-search when it retrieves DICOM data from the endpoint.
+search when it retrieves DICOM data from the endpoint. The URL may also carry
+a token-bound capability whose permissions and binding are enforced alongside
+the token checks; a token-protected endpoint need not use a capability URL.
 
-When `false`, the endpoint URL carries the retrieval capability and the app
+When `false`, the endpoint URL carries a bearer capability and the app
 follows it without sending its SMART access token. The URL is a credential,
 not an indication that the data is public. Both values apply equally to
-SMART App Launch and SMART Backend Services.
+SMART App Launch and SMART Backend Services. A bearer capability SHALL expire
+no later than the SMART token authorizing its issuance.
+See [Retrieving images](specification.html#retrieving-images) for enforcement,
+lifetime, and early-revocation requirements.
 
 This mirrors the `requiresAccessToken` concept from the
 [FHIR Asynchronous Bulk Data Request Pattern](https://hl7.org/fhir/async-bulk.html),
@@ -76,7 +81,9 @@ The `address` is a WADO-RS base URL: the app appends
 `/studies/{Study Instance UID}` (and optionally deeper paths) to retrieve
 DICOM data. The `requires-access-token` extension says whether the app
 presents its SMART access token on those requests (`true`) or follows a
-capability URL without that token (`false`). Both forms can be returned
+bearer capability URL without that token (`false`). A token-protected URL may
+also carry a token-bound capability; the server then enforces both sets of
+restrictions. Both forms can be returned
 for clients using either SMART App Launch or SMART Backend Services.
 """
 * status MS

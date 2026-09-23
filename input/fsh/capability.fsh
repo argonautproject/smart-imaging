@@ -10,7 +10,7 @@ Description: "Requirements for a SMART Imaging Access FHIR endpoint."
 * fhirVersion = #4.0.1
 * format = #json
 * description = """
-Requirements for the Imaging Server's FHIR endpoint. In addition to the FHIR
+Requirements for the Imaging FHIR Server, the FHIR function of the Imaging Server. In addition to the FHIR
 behavior described here, the server hosts or links to WADO-RS endpoints as
 described in [Retrieving images](specification.html#retrieving-images), and
 validates SMART access tokens as described in
@@ -30,10 +30,14 @@ Backend Services requests SHALL be limited to the client's pre-authorized access
 system/ImagingStudy.rs does not grant access to all patients or studies.
 Missing patient context SHALL NOT imply system-level access. In either mode,
 returned WADO-RS Endpoints can require the same SMART token (requires-access-token
-= true) or provide capability URLs to follow without it (false). Capability
-issuance SHALL be limited to the data and operations authorized by the FHIR
-request. Each WADO-RS request SHALL validate either the SMART token or the
-capability, as described in [Retrieving images](specification.html#retrieving-images).
+= true) or provide bearer capability URLs to follow without it (false). A
+token-protected URL may also carry a token-bound capability; the DICOMweb Server
+then validates the token, the capability, and their binding and enforces all
+applicable restrictions. Capability issuance SHALL be limited to the data and
+operations authorized by the FHIR request. A bearer capability SHALL expire no
+later than the SMART token authorizing its issuance. Each WADO-RS request SHALL
+enforce the validation, lifetime, and revocation requirements in
+[Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)

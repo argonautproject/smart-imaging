@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 650" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="The six steps of SMART Imaging Access as a vertical timeline: discover the imaging endpoint, authorize, get the access token, optionally fetch clinical data, find studies, and fetch images; the imaging endpoints introspect the token with the Authorization Server">
-  <line x1="36" y1="44" x2="36" y2="600" stroke="#d5dae2" stroke-width="2"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 858" width="400" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Six-step SMART Imaging Access timeline: discover the imaging endpoint, authorize, get an access token, optionally fetch clinical data, find studies, and fetch images. The collective Imaging Server contains Imaging FHIR Server, providing ImagingStudy and Endpoint, and DICOMweb Server, providing WADO-RS retrieval. Each resource server introspects the token with the Authorization Server, then performs a visible study-access policy check before returning authorized studies or images.">
+  <line x1="36" y1="44" x2="36" y2="820" stroke="#d5dae2" stroke-width="2"/>
 
   <!-- Step 1 -->
   <circle cx="36" cy="48" r="13" fill="#2563eb"/>
@@ -30,22 +30,34 @@
   <text x="64" y="330" font-size="10.5" font-weight="600" fill="#8a93a1">App → Clinical FHIR Server</text>
   <text x="64" y="350" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET Patient/123</text>
 
+  <!-- Collective imaging role, containing both resource-server interfaces -->
+  <rect x="52" y="375" width="368" height="468" rx="9" fill="#f0faf8" stroke="#b2ddd5"/>
+  <text x="64" y="398" font-size="12.5" font-weight="700" fill="#0f766e">Imaging Server</text>
+
   <!-- Step 5 -->
-  <circle cx="36" cy="386" r="13" fill="#0d9488"/>
-  <text x="36" y="390.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
-  <text x="64" y="390" font-size="13" font-weight="700" fill="#1f2430">Find studies</text>
-  <text x="64" y="410" font-size="10.5" font-weight="600" fill="#8a93a1">App → Imaging FHIR endpoint</text>
-  <text x="64" y="430" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET ImagingStudy?patient=123</text>
-  <text x="64" y="447" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">    &amp;_include=ImagingStudy:endpoint</text>
-  <text x="64" y="466" font-size="10.5" fill="#6d28d9">Token introspection → Authorization Server</text>
-  <text x="64" y="485" font-size="10.5" fill="#5b6472">→ Bundle of studies + WADO-RS endpoints</text>
+  <circle cx="36" cy="418" r="13" fill="#0d9488"/>
+  <text x="36" y="422.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+  <text x="64" y="422" font-size="13" font-weight="700" fill="#1f2430">Find studies</text>
+  <text x="64" y="442" font-size="10.5" font-weight="600" fill="#8a93a1">App → Imaging FHIR Server</text>
+  <text x="64" y="462" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET ImagingStudy?patient=123</text>
+  <text x="64" y="479" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">    &amp;_include=ImagingStudy:endpoint</text>
+  <text x="64" y="498" font-size="10.5" fill="#6d28d9">Token introspection → Authorization Server</text>
+  <text x="64" y="517" font-size="10.5" fill="#6d28d9">← Active token · patient context · imaging scopes</text>
+  <rect x="64" y="530" width="342" height="52" rx="7" fill="#ffffff" stroke="#0d9488" stroke-width="1.3"/>
+  <text x="76" y="550" font-size="10.5" fill="#5b6472">Imaging FHIR Server</text>
+  <text x="76" y="570" font-size="12" font-weight="600" fill="#0f766e">Apply study-access policy</text>
+  <text x="64" y="604" font-size="10.5" fill="#5b6472">→ Authorized studies: ImagingStudy + Endpoint (Bundle)</text>
 
   <!-- Step 6 -->
-  <circle cx="36" cy="526" r="13" fill="#0d9488"/>
-  <text x="36" y="530.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
-  <text x="64" y="530" font-size="13" font-weight="700" fill="#1f2430">Fetch images</text>
-  <text x="64" y="550" font-size="10.5" font-weight="600" fill="#8a93a1">App → WADO-RS endpoint</text>
-  <text x="64" y="570" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET {address}/studies/{uid}</text>
-  <text x="64" y="589" font-size="10.5" fill="#6d28d9">Token introspection → Authorization Server</text>
-  <text x="64" y="608" font-size="10.5" fill="#5b6472">→ DICOM instances (multipart)</text>
+  <circle cx="36" cy="664" r="13" fill="#0d9488"/>
+  <text x="36" y="668.5" font-size="12.5" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+  <text x="64" y="668" font-size="13" font-weight="700" fill="#1f2430">Fetch images</text>
+  <text x="64" y="688" font-size="10.5" font-weight="600" fill="#8a93a1">App → DICOMweb Server (WADO-RS)</text>
+  <text x="64" y="708" font-size="10.5" fill="#3c4453" font-family="ui-monospace, Menlo, Consolas, monospace">GET {address}/studies/{uid}</text>
+  <text x="64" y="727" font-size="10.5" fill="#6d28d9">Token introspection → Authorization Server</text>
+  <text x="64" y="746" font-size="10.5" fill="#6d28d9">← Active token · patient context · imaging scopes</text>
+  <rect x="64" y="759" width="342" height="52" rx="7" fill="#ffffff" stroke="#0d9488" stroke-width="1.3"/>
+  <text x="76" y="779" font-size="10.5" fill="#5b6472">DICOMweb Server</text>
+  <text x="76" y="799" font-size="12" font-weight="600" fill="#0f766e">Authorize requested study</text>
+  <text x="64" y="831" font-size="10.5" fill="#5b6472">→ Authorized images: DICOM instances (multipart)</text>
 </svg>

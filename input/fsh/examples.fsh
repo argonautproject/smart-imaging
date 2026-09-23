@@ -107,7 +107,8 @@ An alternative authorized response for the CT study, usable with either App Laun
 or Backend Services. The contained Endpoint has requires-access-token = false.
 The client appends the study path to its address and retrieves DICOM data without
 sending the SMART access token. The URL capability grants access only to this study.
-The capability value is illustrative, not a real credential.
+The capability value is illustrative, not a real credential. In a deployment,
+this bearer capability expires no later than the SMART token authorizing issuance.
 """
 * contained[0] = wado-capability-endpoint-contained
 * identifier[dicomUid].system = "urn:dicom:uid"
