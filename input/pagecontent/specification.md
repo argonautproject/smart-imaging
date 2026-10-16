@@ -199,6 +199,25 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 [DICOM instances, one part each]
 ```
 
+**Transfer syntax negotiation.** Apps SHALL include the `transfer-syntax` parameter in the `Accept` header of every WADO-RS retrieval. Under [PS3.18 §8.7.3](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.3.html), a request without it asks for Explicit VR Little Endian (uncompressed), which a server holding compressed data can satisfy only by decoding it. Apps SHALL include `transfer-syntax=*` among the acceptable types. Apps that prefer smaller payloads SHOULD list lossless compressed transfer syntaxes first and `transfer-syntax=*` last, using `q` weights as described in [PS3.18 §8.7.5](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.5.html):
+
+```
+Accept: multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.70,
+        multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.90; q=0.9,
+        multipart/related; type=application/dicom; transfer-syntax=*; q=0.5
+```
+
+Servers SHALL honor `transfer-syntax=*` by returning instances as stored. Servers SHOULD be able to return images that are stored uncompressed in at least one of the following lossless transfer syntaxes, either by re-encoding on request or by keeping compressed copies:
+
+| Transfer syntax | UID |
+|---|---|
+| JPEG Lossless, Non-Hierarchical, First-Order Prediction (Process 14, Selection Value 1) | `1.2.840.10008.1.2.4.70` |
+| JPEG 2000 Image Compression (Lossless Only) | `1.2.840.10008.1.2.4.90` |
+
+These are the compressed transfer syntaxes that DICOM's general-purpose DVD and USB media profiles require every reader to support ([PS3.11 Annex H](https://dicom.nema.org/medical/dicom/current/output/chtml/part11/chapter_H.html) and [Annex J](https://dicom.nema.org/medical/dicom/current/output/chtml/part11/chapter_J.html)), so receiving systems can be expected to read them. A server that re-encodes for these requests SHALL do so losslessly, and each part of the response SHALL declare its actual transfer syntax in its `Content-Type`. A server that cannot honor a request that omits the `transfer-syntax` parameter MAY respond with `406 Not Acceptable` and a body explaining what to send, rather than return data that does not match the PS3.18 default.
+
+An app that receives uncompressed data MAY compress it losslessly itself before storing or forwarding it.
+
 **Additional retrieval operations.** Further WADO-RS capabilities enable richer app behavior (progressive loading, thumbnails, viewing without a full download). Servers SHOULD support, per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html):
 
 * **Series-level** retrieval — `GET /studies/{uid}/series/{uid}`
@@ -206,7 +225,6 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 * **Frame-level** retrieval — `.../instances/{uid}/frames/{n}`
 * **Rendered** images — `.../rendered` at study, series, or instance level
 * **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
-* **Transfer-syntax negotiation** — re-encoding payloads to match the `Accept` header
 
 Apps SHOULD degrade gracefully: try the richer request, fall back to full-study retrieval if the server doesn't offer it.
 
