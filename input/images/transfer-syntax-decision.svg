@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-labelledby="title desc">
+<title id="title">How a server chooses a transfer syntax for each instance</title>
+<desc id="desc">The server reads the app's Accept list, where an item without a q weight counts as 1, and takes items from highest weight to lowest. If the item is the wildcard or matches the instance's stored transfer syntax, the server sends the instance as stored, adding no lossy compression. Otherwise, if the server cannot produce that transfer syntax for this instance, it tries the next item. If it can, it re-encodes losslessly for a lossless item, or compresses lossily for a lossy item and sets the Lossy Image Compression attributes, then sends. Every request offers the wildcard, so the walk always ends with a send. The decision is made per instance, and each part names the transfer syntax actually sent.</desc>
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9 Z" fill="#334155"/></marker></defs>
+<rect width="960" height="640" fill="#f8fafc"/>
+<rect x="20" y="30" width="250" height="270" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="40" y="62" font-size="20" fill="#172b45" font-weight="650" text-anchor="start">App&#8217;s Accept list</text>
+<text x="40" y="100" font-size="16" fill="#172b45" font-weight="400" text-anchor="start">JPEG 2000 Lossless</text>
+<text x="250" y="100" font-size="14" fill="#526175" font-weight="400" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">q=1</text>
+<text x="40" y="134" font-size="16" fill="#172b45" font-weight="400" text-anchor="start">JPEG Lossless</text>
+<text x="250" y="134" font-size="14" fill="#526175" font-weight="400" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">q=0.8</text>
+<text x="40" y="168" font-size="16" fill="#172b45" font-weight="400" text-anchor="start">Uncompressed</text>
+<text x="250" y="168" font-size="14" fill="#526175" font-weight="400" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">q=0.6</text>
+<text x="40" y="202" font-size="16" fill="#172b45" font-weight="400" text-anchor="start">*</text>
+<text x="250" y="202" font-size="14" fill="#526175" font-weight="400" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">q=0.5</text>
+<text x="40" y="240" font-size="15" fill="#526175" font-weight="400" text-anchor="start">Highest q first.</text>
+<text x="40" y="262" font-size="15" fill="#526175" font-weight="400" text-anchor="start">No q means q=1.</text>
+<rect x="310" y="30" width="230" height="70" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="425" y="60" font-size="18" fill="#172b45" font-weight="650" text-anchor="middle">Take the next item</text>
+<text x="425" y="84" font-size="15" fill="#526175" font-weight="400" text-anchor="middle">highest q first</text>
+<path d="M270 52 H308" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<rect x="310" y="140" width="230" height="84" rx="10" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<text x="425" y="172" font-size="17" fill="#172b45" font-weight="600" text-anchor="middle">Is it *, or the</text>
+<text x="425" y="196" font-size="17" fill="#172b45" font-weight="600" text-anchor="middle">instance&#8217;s stored syntax?</text>
+<path d="M425 100 V138" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<rect x="600" y="140" width="340" height="84" rx="10" fill="#f0fdfa" stroke="#68b6ad" stroke-width="1.5"/>
+<text x="620" y="172" font-size="18" fill="#0f766e" font-weight="650" text-anchor="start">Send as stored</text>
+<text x="620" y="198" font-size="15" fill="#526175" font-weight="400" text-anchor="start">No lossy compression is added.</text>
+<path d="M540 182 H598" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="552" y="174" font-size="15" fill="#526175" font-weight="600" text-anchor="start">yes</text>
+<rect x="310" y="264" width="230" height="84" rx="10" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<text x="425" y="296" font-size="17" fill="#172b45" font-weight="600" text-anchor="middle">Can the server produce</text>
+<text x="425" y="320" font-size="17" fill="#172b45" font-weight="600" text-anchor="middle">it for this instance?</text>
+<path d="M425 224 V262" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="433" y="248" font-size="15" fill="#526175" font-weight="600" text-anchor="start">no</text>
+<path d="M310 306 H290 V82 H308" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="282" y="322" font-size="15" fill="#526175" font-weight="600" text-anchor="end">no:</text>
+<text x="282" y="342" font-size="15" fill="#526175" font-weight="600" text-anchor="end">try next</text>
+<rect x="310" y="388" width="230" height="70" rx="10" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<text x="425" y="429" font-size="17" fill="#172b45" font-weight="600" text-anchor="middle">Is the item lossy?</text>
+<path d="M425 348 V386" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="433" y="372" font-size="15" fill="#526175" font-weight="600" text-anchor="start">yes</text>
+<rect x="600" y="388" width="340" height="70" rx="10" fill="#f0fdfa" stroke="#68b6ad" stroke-width="1.5"/>
+<text x="620" y="418" font-size="18" fill="#0f766e" font-weight="650" text-anchor="start">Re-encode losslessly and send</text>
+<text x="620" y="442" font-size="15" fill="#526175" font-weight="400" text-anchor="start">Uncompressed or lossless compression</text>
+<path d="M540 423 H598" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="552" y="415" font-size="15" fill="#526175" font-weight="600" text-anchor="start">no</text>
+<rect x="310" y="498" width="630" height="74" rx="10" fill="#fffbeb" stroke="#e7b656" stroke-width="1.5"/>
+<text x="330" y="528" font-size="18" fill="#92400e" font-weight="650" text-anchor="start">Compress lossily and send</text>
+<text x="330" y="552" font-size="15" fill="#172b45" font-weight="400" text-anchor="start">Set Lossy Image Compression (0028,2110) = 01, with ratio and method.</text>
+<path d="M425 458 V496" fill="none" stroke="#334155" stroke-width="1.8" stroke-linejoin="round" marker-end="url(#arr)"/>
+<text x="433" y="482" font-size="15" fill="#526175" font-weight="600" text-anchor="start">yes</text>
+<text x="20" y="606" font-size="15" fill="#526175" font-weight="400" text-anchor="start">Decided per instance. Each part&#8217;s Content-Type names the transfer syntax actually sent.</text>
+<text x="20" y="628" font-size="15" fill="#526175" font-weight="400" text-anchor="start">Every request offers *, so the walk always ends with a send.</text>
+</svg>
