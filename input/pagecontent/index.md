@@ -62,6 +62,10 @@ This guide grew out of the [Sync for Science (S4S) Imaging specification](https:
 
 ### Dependencies
 
+This guide builds on the protocol requirements in [SMART App Launch 2.2](https://hl7.org/fhir/smart-app-launch/STU2.2/) for authorization, discovery, Backend Services, and token introspection. Its FHIR profiles constrain FHIR R4 `ImagingStudy` and `Endpoint`; they do not reference artifacts from the SMART App Launch FHIR package.
+
+FHIR package dependencies are listed below.
+
 {% include dependency-table.xhtml %}
 
 {% include globals-table.xhtml %}

@@ -15,9 +15,6 @@ publisher:
   url: https://confluence.hl7.org/display/AP/Argonaut+Project+Home
 jurisdiction: http://unstats.un.org/unsd/methods/m49/m49.htm#001 "World"
 
-dependencies:
-  hl7.fhir.uv.smart-app-launch: 2.2.0
-
 pages:
   index.md:
     title: Home
