@@ -35,7 +35,7 @@ Description: "A CT study whose WADO-RS Endpoint is contained in the resource."
 * modality = $DCM#CT "Computed Tomography"
 * numberOfSeries = 1
 * numberOfInstances = 3
-* endpoint.reference = "#e"
+* endpoint[wadoRs].reference = "#e"
 * series.uid = "1.2.840.99999999.19341866.1571297684.1"
 * series.number = 1
 * series.modality = $DCM#CT
@@ -75,7 +75,7 @@ Description: "An MR study that references a standalone WADO-RS Endpoint resource
 * modality = $DCM#MR "Magnetic Resonance"
 * numberOfSeries = 1
 * numberOfInstances = 1
-* endpoint = Reference(wado-endpoint-example)
+* endpoint[wadoRs] = Reference(wado-endpoint-example)
 * series.uid = "1.2.840.99999999.82943819.1948573621.1"
 * series.number = 1
 * series.modality = $DCM#MR
@@ -107,7 +107,7 @@ Usage: #inline
 * modality = $DCM#CT "Computed Tomography"
 * numberOfSeries = 1
 * numberOfInstances = 3
-* endpoint.reference = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
+* endpoint[wadoRs].reference = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
 
 Instance: imaging-capability-search-response
 InstanceOf: Bundle
@@ -152,3 +152,32 @@ Description: "What an app receives from `GET [imaging-base]/ImagingStudy?patient
 * entry[2].fullUrl = "https://imaging.example.org/fhir/Endpoint/wado-endpoint-example"
 * entry[2].resource = wado-endpoint-example
 * entry[2].search.mode = #include
+
+// ---------- Study with both WADO-RS and QIDO-RS Endpoints ----------
+
+Instance: qido-endpoint-contained
+InstanceOf: Endpoint
+Usage: #inline
+* id = "qido"
+* status = #active
+* connectionType = $ConnType#dicom-qido-rs
+* payloadType = $PayloadType#any
+* address = "https://imaging.example.org/qido-rs"
+
+Instance: imaging-study-wado-and-qido
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with WADO-RS and QIDO-RS Endpoints"
+Description: "A CT study carrying both a contained SMART WADO-RS Endpoint for DICOM retrieval and a second non-WADO-RS Endpoint (QIDO-RS)."
+* contained[0] = wado-endpoint-contained
+* contained[1] = qido-endpoint-contained
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* started = "2023-02-24T14:02:49Z"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 1
+* numberOfInstances = 3
+* endpoint[wadoRs].reference = "#e"
+* endpoint[1].reference = "#qido"
