@@ -145,18 +145,20 @@ The Imaging Server SHALL support these search parameter combinations:
 | Query | Use case |
 |---|---|
 | `patient=123` | List the patient's studies accessible under this authorization |
-| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Incremental sync: only studies updated since the app last checked |
 | `patient=123&identifier={system}%7C{value}`<br/>`patient=123&identifier={value}` | Look up studies by study identifier — such as DICOM Study Instance UID (`identifier=urn:dicom:uid%7Curn:oid:1.2.3` or `identifier=urn:oid:1.2.3`), Accession Number (`identifier=http://hospital.example.org/accession%7CACC-2023-0042` or `identifier=ACC-2023-0042`), or another identifier on `ImagingStudy.identifier` |
 
-The Imaging Server SHOULD also support searching by order Accession Number on `ImagingStudy.basedOn.identifier`:
+The Imaging Server SHOULD also support these search parameter combinations:
 
 | Query | Use case |
 |---|---|
 | `patient=123&based-on:identifier={system}%7C{value}`<br/>`patient=123&based-on:identifier={value}` | Look up studies by order Accession Number on `ImagingStudy.basedOn.identifier` (FHIR R6 and IHE MADO compatibility) |
+| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Filter for `ImagingStudy` resources created or modified since a given timestamp |
 
 **Accession Number representation and lookup.** Clinical reports (`DiagnosticReport`, `ServiceRequest`) often carry the order's Accession Number rather than the DICOM Study Instance UID. When the Imaging Server knows a study's Accession Number, it SHALL include it in `ImagingStudy.identifier[accession]` (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known) and SHALL support searching by `patient` + `identifier`. Because one order can produce multiple studies, an Accession Number search may return more than one `ImagingStudy`.
 
 Because the FHIR R6 draft and [IHE MADO](https://profiles.ihe.net/RAD/MADO/index.html) place the Accession Number on `ImagingStudy.basedOn.identifier` (`type = ACSN`), servers knowing a study's Accession Number SHOULD also populate `ImagingStudy.basedOn.identifier` and SHOULD support `patient` + `based-on:identifier`.
+
+**Resource change filtering (`_lastUpdated`).** Following [US Core `_lastUpdated` guidance](https://hl7.org/fhir/us/core/general-guidance.html#searching-using-lastupdated), servers SHOULD support `patient` + `_lastUpdated`. Servers that support it SHALL document in `CapabilityStatement.rest.resource.searchParam.documentation` which changes update `_lastUpdated`. Because `_lastUpdated` reflects changes to the FHIR `ImagingStudy` resource, it does not necessarily change on in-place DICOM edits and does not report studies that were deleted, reassigned, or newly restricted.
 
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. An Endpoint may be a response-local Bundle entry, a separately addressable resource included in the Bundle, or a contained resource within an `ImagingStudy`. Apps SHALL support all three forms and resolve references using the [FHIR Bundle reference-resolution rules](https://hl7.org/fhir/R4/bundle.html#references). See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 
@@ -168,14 +170,16 @@ When `status` is `available`, the study carries at least one study-level **endpo
 
 Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with WADO-RS and QIDO-RS Endpoints](ImagingStudy-imaging-study-wado-and-qido.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [search response with a response-local capability Endpoint](Bundle-imaging-capability-search-response.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
 
-**Delayed search results: 503 and Retry-After.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request. Rather than holding the connection open, the server MAY respond:
+**Delayed or incomplete search results.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request, or a service aggregating across more than one archive. Rather than holding the connection open, the server MAY respond:
 
 ```
 HTTP/1.1 503 Service Unavailable
 Retry-After: 30
 ```
 
-The app SHOULD wait the indicated number of seconds and repeat the identical request. Once results are ready, the server responds normally with the Bundle.
+The app SHOULD wait the indicated delay and repeat the identical request. Once results are ready, the server responds normally with the Bundle.
+
+When some studies are ready while another backing source is still responding or unreachable, the server MAY instead return the available `ImagingStudy` matches (`entry.search.mode = "match"`) together with an `OperationOutcome` entry (`entry.search.mode = "outcome"`, `issue.code = "incomplete"`). An app can repeat the search later to obtain the remaining results.
 
 **Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the `patient` search parameter SHALL match the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
 

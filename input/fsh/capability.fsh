@@ -39,14 +39,17 @@ validation, lifetime, and revocation requirements in
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
 The server SHALL support searching ImagingStudy by `patient`, alone and in
-combination with `_lastUpdated` and `identifier` using standard FHIR token
-syntax (`{system}|{value}` or `{value}`) to match any study identifier on
-`ImagingStudy.identifier` (including the DICOM Study Instance UID in
-`urn:oid:...` form on `identifier[dicomUid]` and the Accession Number on
-`identifier[accession]`). For wider compatibility with FHIR R6 and IHE MADO,
-the server SHOULD also populate `ImagingStudy.basedOn.identifier` when the
-Accession Number is known and SHOULD support searching by `patient` in
-combination with `based-on:identifier` (`{system}|{value}` or `{value}`).
+combination with `identifier` using standard FHIR token syntax (`{system}|{value}`
+or `{value}`) to match any study identifier on `ImagingStudy.identifier`
+(including the DICOM Study Instance UID in `urn:oid:...` form on
+`identifier[dicomUid]` and the Accession Number on `identifier[accession]`).
+For wider compatibility with FHIR R6 and IHE MADO, the server SHOULD also
+populate `ImagingStudy.basedOn.identifier` when the Accession Number is known
+and SHOULD support searching by `patient` in combination with
+`based-on:identifier` (`{system}|{value}` or `{value}`). The server SHOULD also
+support searching by `patient` in combination with `_lastUpdated`. Servers that
+support it SHALL document in `searchParam.documentation` which changes update
+`_lastUpdated`.
 The server SHALL support `_include=ImagingStudy:endpoint`
 so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
 provided as response-local Bundle entries, separately addressable resources
@@ -61,7 +64,10 @@ Neither authorization mode requires population-wide search.
 
 If results are not yet available (for example, the server is querying an
 underlying PACS), the server MAY respond `503` with a `Retry-After` header;
-the app retries after the indicated number of seconds.
+the app retries after the indicated number of seconds. When some results are available while another source is slow or unreachable, the
+server MAY return the available matches alongside an `OperationOutcome` entry
+with `search.mode = outcome` and `issue.code = incomplete`. An app can repeat
+the search later to obtain the remaining results.
 """
 * rest[0].resource[0].interaction[0].code = #search-type
 * rest[0].resource[0].searchInclude[0] = "ImagingStudy:endpoint"
@@ -70,7 +76,7 @@ the app retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[0].type = #reference
 * rest[0].resource[0].searchParam[0].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
 * rest[0].resource[0].searchParam[0].extension[0].valueCode = #SHALL
-* rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `identifier` or `_lastUpdated`, and SHOULD be supported in combination with `based-on:identifier`."
+* rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `identifier`, and SHOULD be supported in combination with `based-on:identifier` and `_lastUpdated`."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
@@ -86,4 +92,6 @@ the app retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[3].name = "_lastUpdated"
 * rest[0].resource[0].searchParam[3].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
 * rest[0].resource[0].searchParam[3].type = #date
-* rest[0].resource[0].searchParam[3].documentation = "Used with `patient` to fetch only studies updated after a given time, e.g. `_lastUpdated=gt2023-04-17T04:00:00Z`."
+* rest[0].resource[0].searchParam[3].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[3].extension[0].valueCode = #SHOULD
+* rest[0].resource[0].searchParam[3].documentation = "SHOULD be supported with `patient` to filter for `ImagingStudy` resources created or modified since a given timestamp (e.g., `_lastUpdated=gt2023-04-17T04:00:00Z`). Servers supporting `_lastUpdated` SHALL document here which change types update `_lastUpdated`. Tracks changes to the FHIR `ImagingStudy` resource rather than in-place DICOM edits or removed studies."
