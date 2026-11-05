@@ -1,6 +1,6 @@
 **SMART Imaging Access lets an app retrieve clinical records, imaging-study metadata, and DICOM images using the same SMART access token.**
 
-This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers.
+This helps patients gather their own records, supports second opinions, streamlines research data donation, lets clinicians pull studies into their preferred viewers, and interoperate diagnostic quality images between organizations.
 
 The guide supports both [SMART App Launch](specification.html#app-launch), for user-facing authorization, and [SMART Backend Services](specification.html#backend-services), for pre-authorized clients. Deployments can support either or both patterns. Neither requires a separate imaging authorization step.
 
@@ -24,7 +24,7 @@ The guide supports both [SMART App Launch](specification.html#app-launch), for u
 
 This guide uses the following actor names throughout:
 
-* **App** — a client accessing clinical and imaging data. A user-facing application (patient- or provider-facing) can connect through SMART App Launch; a pre-authorized service can connect through SMART Backend Services. Unless stated otherwise, the guide's discovery, search, retrieval, and token-handling requirements apply to Backend Clients too.
+* **App** — a client accessing clinical and imaging data. A user-facing application (patient- or provider-facing) can connect through SMART App Launch; a pre-authorized service, including external organizations, can connect through SMART Backend Services. Unless stated otherwise, the guide's discovery, search, retrieval, and token-handling requirements apply to Backend Clients too. 
 * **Backend Client** — an App using SMART Backend Services, with access authorized in advance rather than through a user-facing launch.
 * **Authorization Server** — the SMART authorization server configured for the deployment. It supports client registration, token issuance, and token validation for participating resource servers. Depending on the supported modes, it provides App Launch authorization and refresh, Backend Services token issuance for pre-authorized clients, or both. It may be provided by an EHR or another service.
 * **Clinical FHIR Server** — a FHIR service exposing clinical resources such as `Patient`, `DiagnosticReport`, and `ServiceRequest`. Its SMART configuration can advertise imaging endpoints. An app may query it for clinical data as part of an imaging workflow.
