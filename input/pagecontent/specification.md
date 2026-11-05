@@ -239,6 +239,8 @@ If the search returns the study, the client can retry retrieval using the return
 
 **Credential protection.** Clients SHALL protect both access tokens and capability URLs from unintended disclosure. A capability URL is usable only with its associated valid SMART token.
 
-[Implementing Study-Level Authorization](authorization-patterns.html) describes ways to distribute these decisions and checks among cooperating systems.
+The WADO-RS endpoint SHALL deny requests outside the authorized access without returning DICOM data. When access restrictions exclude only specific series or instances within a study, the Imaging Server MAY either withhold the study or expose the authorized subset consistently across `ImagingStudy` and WADO-RS retrieval. Status codes follow [PS3.18 §8.5](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.5.html). A server can respond `404 Not Found` to requests for excluded series or instances so that a client cannot infer that they exist.
 
-The WADO-RS endpoint SHALL deny requests outside the authorized access without returning DICOM data. A full-study request SHALL NOT return a successful partial study when access restrictions exclude some of its contents; the server SHALL deny that request. If assembling authorized data takes time (for example, a C-MOVE from a PACS under the hood), the endpoint MAY respond `503` with a `Retry-After` header, exactly as in [Finding studies](#finding-studies).
+If assembling the requested data takes time (for example, a C-MOVE from a PACS under the hood), the endpoint MAY respond `503 Service Unavailable` with a `Retry-After` header, as in [Finding studies](#finding-studies), rather than returning an incomplete `200 OK` payload. Future revisions of this guide will align with DICOM WG-27 as DICOM standardizes delayed or partial WADO-RS retrieval.
+
+[Implementing Study-Level Authorization](authorization-patterns.html) describes ways to distribute these decisions and checks among cooperating systems.

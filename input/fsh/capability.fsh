@@ -60,7 +60,10 @@ the same Bundle page as each referencing study, even without an _include request
 Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
 patient-context mismatches and backend requests for unauthorized patients receive
 403 Forbidden. Results and included Endpoints SHALL exclude unauthorized studies.
-Neither authorization mode requires population-wide search.
+When access restrictions exclude only specific series or instances within a
+study, the server MAY either withhold the study or expose the authorized subset
+consistently across `ImagingStudy` and WADO-RS retrieval. Neither authorization
+mode requires population-wide search.
 
 If results are not yet available (for example, the server is querying an
 underlying PACS), the server MAY respond `503` with a `Retry-After` header;
