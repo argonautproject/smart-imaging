@@ -146,7 +146,17 @@ The Imaging Server SHALL support these search parameter combinations:
 |---|---|
 | `patient=123` | List the patient's studies accessible under this authorization |
 | `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Incremental sync: only studies updated since the app last checked |
-| `patient=123&identifier=urn:oid:1.2.3` | Look up one study by DICOM Study Instance UID |
+| `patient=123&identifier={system}%7C{value}`<br/>`patient=123&identifier={value}` | Look up studies by study identifier — such as DICOM Study Instance UID (`identifier=urn:dicom:uid%7Curn:oid:1.2.3` or `identifier=urn:oid:1.2.3`), Accession Number (`identifier=http://hospital.example.org/accession%7CACC-2023-0042` or `identifier=ACC-2023-0042`), or another identifier on `ImagingStudy.identifier` |
+
+The Imaging Server SHOULD also support searching by order Accession Number on `ImagingStudy.basedOn.identifier`:
+
+| Query | Use case |
+|---|---|
+| `patient=123&based-on:identifier={system}%7C{value}`<br/>`patient=123&based-on:identifier={value}` | Look up studies by order Accession Number on `ImagingStudy.basedOn.identifier` (FHIR R6 and IHE MADO compatibility) |
+
+**Accession Number representation and lookup.** Clinical reports (`DiagnosticReport`, `ServiceRequest`) often carry the order's Accession Number rather than the DICOM Study Instance UID. When the Imaging Server knows a study's Accession Number, it SHALL include it in `ImagingStudy.identifier[accession]` (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known) and SHALL support searching by `patient` + `identifier`. Because one order can produce multiple studies, an Accession Number search may return more than one `ImagingStudy`.
+
+Because the FHIR R6 draft and [IHE MADO](https://profiles.ihe.net/RAD/MADO/index.html) place the Accession Number on `ImagingStudy.basedOn.identifier` (`type = ACSN`), servers knowing a study's Accession Number SHOULD also populate `ImagingStudy.basedOn.identifier` and SHOULD support `patient` + `based-on:identifier`.
 
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. An Endpoint may be a response-local Bundle entry, a separately addressable resource included in the Bundle, or a contained resource within an `ImagingStudy`. Apps SHALL support all three forms and resolve references using the [FHIR Bundle reference-resolution rules](https://hl7.org/fhir/R4/bundle.html#references). See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 

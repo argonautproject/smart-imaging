@@ -38,9 +38,16 @@ validation, lifetime, and revocation requirements in
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
-The server SHALL support searching ImagingStudy by patient, alone and in
-combination with `_lastUpdated` and `identifier` (a DICOM Study Instance UID
-in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
+The server SHALL support searching ImagingStudy by `patient`, alone and in
+combination with `_lastUpdated` and `identifier` using standard FHIR token
+syntax (`{system}|{value}` or `{value}`) to match any study identifier on
+`ImagingStudy.identifier` (including the DICOM Study Instance UID in
+`urn:oid:...` form on `identifier[dicomUid]` and the Accession Number on
+`identifier[accession]`). For wider compatibility with FHIR R6 and IHE MADO,
+the server SHOULD also populate `ImagingStudy.basedOn.identifier` when the
+Accession Number is known and SHOULD support searching by `patient` in
+combination with `based-on:identifier` (`{system}|{value}` or `{value}`).
+The server SHALL support `_include=ImagingStudy:endpoint`
 so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
 provided as response-local Bundle entries, separately addressable resources
 included in the Bundle, or contained resources. Response-specific capability
@@ -61,12 +68,22 @@ the app retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[0].name = "patient"
 * rest[0].resource[0].searchParam[0].definition = "http://hl7.org/fhir/SearchParameter/clinical-patient"
 * rest[0].resource[0].searchParam[0].type = #reference
-* rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `_lastUpdated` or `identifier`."
+* rest[0].resource[0].searchParam[0].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[0].extension[0].valueCode = #SHALL
+* rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `identifier` or `_lastUpdated`, and SHOULD be supported in combination with `based-on:identifier`."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
-* rest[0].resource[0].searchParam[1].documentation = "A DICOM Study Instance UID in `urn:oid:...` form, used with `patient` to look up a specific study."
-* rest[0].resource[0].searchParam[2].name = "_lastUpdated"
-* rest[0].resource[0].searchParam[2].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
-* rest[0].resource[0].searchParam[2].type = #date
-* rest[0].resource[0].searchParam[2].documentation = "Used with `patient` to fetch only studies updated after a given time, e.g. `_lastUpdated=gt2023-04-17T04:00:00Z`."
+* rest[0].resource[0].searchParam[1].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[1].extension[0].valueCode = #SHALL
+* rest[0].resource[0].searchParam[1].documentation = "SHALL be supported with `patient` using standard FHIR token syntax (`{system}|{value}` or `{value}`) to look up studies by DICOM Study Instance UID (`urn:dicom:uid|urn:oid:...` or `urn:oid:...`), Accession Number (`{system}|{accession}` or `{accession}`), or other study identifiers on `ImagingStudy.identifier`."
+* rest[0].resource[0].searchParam[2].name = "based-on"
+* rest[0].resource[0].searchParam[2].definition = "http://hl7.org/fhir/SearchParameter/ImagingStudy-basedon"
+* rest[0].resource[0].searchParam[2].type = #reference
+* rest[0].resource[0].searchParam[2].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[2].extension[0].valueCode = #SHOULD
+* rest[0].resource[0].searchParam[2].documentation = "SHOULD be supported with `patient` using the `:identifier` modifier (`based-on:identifier={system}|{value}` or `based-on:identifier={value}`) to look up studies by order Accession Number on `ImagingStudy.basedOn.identifier` for FHIR R6 and IHE MADO compatibility."
+* rest[0].resource[0].searchParam[3].name = "_lastUpdated"
+* rest[0].resource[0].searchParam[3].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
+* rest[0].resource[0].searchParam[3].type = #date
+* rest[0].resource[0].searchParam[3].documentation = "Used with `patient` to fetch only studies updated after a given time, e.g. `_lastUpdated=gt2023-04-17T04:00:00Z`."

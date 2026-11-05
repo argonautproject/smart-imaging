@@ -37,10 +37,10 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 </div>
 
 * **In DICOM**, the study record itself carries the Accession Number, the Study Instance UID, and patient demographics including MRN; series and instances have their own UIDs.
-* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and `endpoint` references pointing at WADO-RS. An MRN may be used internally to map that patient to imaging records.
+* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the DICOM hierarchy: the Study Instance UID in `ImagingStudy.identifier[dicomUid]`, the Accession Number (when known) in `ImagingStudy.identifier[accession]` with type `ACSN` and its assigning namespace when known (and recommended in `basedOn.identifier` for FHIR R6 and IHE MADO compatibility), series and instance UIDs within, a reference to the FHIR `Patient` resource, and `endpoint` references pointing at WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
-A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and its Endpoint using `patient={id}&identifier=urn:oid:{uid}`, as described in [Finding studies](specification.html#finding-studies).
+A clinical record can identify a study by Study Instance UID, Accession Number, or another study identifier without recording its retrieval URL. The app locates the study and its Endpoint using `patient={id}&identifier={system}|{value}` or `patient={id}&identifier={value}` (for example, `identifier=urn:oid:{uid}` or `identifier={system}|{accession}`), as described in [Finding studies](specification.html#finding-studies).
 
 DICOM requires each Study Instance UID to identify a single study, though archives occasionally coerce UIDs during import or contain historical collisions across patients. A study's UID should not change without a clinical reason. Before exposing studies through SMART Imaging Access, deployments need to ensure that each exposed Study Instance UID maps to the intended patient so that UID-based lookups and WADO-RS retrievals cannot cross patient records.
 
