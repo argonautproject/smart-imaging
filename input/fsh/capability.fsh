@@ -45,10 +45,13 @@ obtained through refresh or subsequent token requests). See
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
-The server SHALL support searching ImagingStudy by patient, alone and in
-combination with `identifier` (a DICOM Study Instance UID in `urn:oid:...`
-form). The server SHOULD also support searching by `patient` in combination
-with `_lastUpdated`. Servers that support it SHALL document in
+The server SHALL support searching ImagingStudy by `patient`, alone and in
+combination with `identifier` using standard FHIR token syntax (`{system}|{value}`
+or `{value}`) to match any study identifier on `ImagingStudy.identifier`
+(including the DICOM Study Instance UID in `urn:oid:...` form on
+`identifier[dicomUid]` and the Accession Number on `identifier[accession]`).
+The server SHOULD also support searching by `patient` in combination with
+`_lastUpdated`. Servers that support it SHALL document in
 their developer documentation which changes update `_lastUpdated`.
 The server SHALL support `_include=ImagingStudy:endpoint`
 so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
@@ -78,11 +81,15 @@ the search later to obtain the remaining results.
 * rest[0].resource[0].searchParam[0].name = "patient"
 * rest[0].resource[0].searchParam[0].definition = "http://hl7.org/fhir/SearchParameter/clinical-patient"
 * rest[0].resource[0].searchParam[0].type = #reference
+* rest[0].resource[0].searchParam[0].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[0].extension[0].valueCode = #SHALL
 * rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `identifier`, and SHOULD be supported in combination with `_lastUpdated`."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
-* rest[0].resource[0].searchParam[1].documentation = "A DICOM Study Instance UID in `urn:oid:...` form, used with `patient` to look up a specific study."
+* rest[0].resource[0].searchParam[1].extension[0].url = "http://hl7.org/fhir/StructureDefinition/capabilitystatement-expectation"
+* rest[0].resource[0].searchParam[1].extension[0].valueCode = #SHALL
+* rest[0].resource[0].searchParam[1].documentation = "SHALL be supported with `patient` using standard FHIR token syntax (`{system}|{value}` or `{value}`) to look up studies by DICOM Study Instance UID (`urn:dicom:uid|urn:oid:...` or `urn:oid:...`), Accession Number (`{system}|{accession}` or `{accession}`), or other study identifiers on `ImagingStudy.identifier`."
 * rest[0].resource[0].searchParam[2].name = "_lastUpdated"
 * rest[0].resource[0].searchParam[2].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
 * rest[0].resource[0].searchParam[2].type = #date

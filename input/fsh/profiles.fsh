@@ -12,15 +12,27 @@ series SHALL list its released instances (with `uid` and `sopClass`).
 * obeys smart-wado-endpoint-when-available
 * obeys smart-hierarchy-when-available
 * identifier 1..* MS
-* identifier ^slicing.discriminator.type = #value
-* identifier ^slicing.discriminator.path = "system"
+* identifier ^short = "Study identifiers (DICOM Study Instance UID required; Accession Number required when known)"
+* identifier ^definition = "Identifiers for the study. Every study SHALL include its DICOM Study Instance UID in the `dicomUid` slice (`system = urn:dicom:uid`, `value = urn:oid:...`). When the server knows a study's Accession Number, including when it is present in the study's DICOM metadata in Accession Number (0008,0050), it SHALL also include it in the `accession` slice (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known)."
+* identifier ^slicing.discriminator.type = #pattern
+* identifier ^slicing.discriminator.path = "$this"
 * identifier ^slicing.rules = #open
-* identifier contains dicomUid 1..1 MS
+* identifier contains
+    dicomUid 1..1 MS and
+    accession 0..* MS
 * identifier[dicomUid] ^short = "DICOM Study Instance UID"
 * identifier[dicomUid] ^definition = "The study's DICOM Study Instance UID, expressed as an identifier with system `urn:dicom:uid` and a value of the form `urn:oid:...`."
+* identifier[dicomUid] ^patternIdentifier.system = "urn:dicom:uid"
 * identifier[dicomUid].system 1..1
 * identifier[dicomUid].system = "urn:dicom:uid" (exactly)
 * identifier[dicomUid].value 1..1
+* identifier[accession] ^short = "Accession Number (required when known)"
+* identifier[accession] ^definition = "The order's Accession Number associated with the study, using `type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known. Servers SHALL populate this slice whenever the study's Accession Number is known, including when it is present in the study's DICOM metadata in Accession Number (0008,0050)."
+* identifier[accession] ^patternIdentifier.type = $V2-0203#ACSN
+* identifier[accession].type 1..1 MS
+* identifier[accession].type = $V2-0203#ACSN
+* identifier[accession].system 0..1 MS
+* identifier[accession].value 1..1 MS
 * status MS
 * status ^short = "registered | available | cancelled | entered-in-error | unknown"
 * status ^definition = "The current state of the study. When `status` is `available`, at least one SMART WADO-RS Endpoint (`endpoint[wadoRs]`) SHALL be present."

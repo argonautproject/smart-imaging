@@ -29,8 +29,15 @@ Description: "A CT study whose WADO-RS Endpoint is contained in the resource."
 * contained[0] = wado-endpoint-contained
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
+* identifier[accession].type = $V2-0203#ACSN
+* identifier[accession].system = "http://hospital.example.org/accession"
+* identifier[accession].value = "ACC-2023-0042"
 * status = #available
 * subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* basedOn[0].type = "ServiceRequest"
+* basedOn[0].identifier.type = $V2-0203#ACSN
+* basedOn[0].identifier.system = "http://hospital.example.org/accession"
+* basedOn[0].identifier.value = "ACC-2023-0042"
 * started = "2023-02-24T14:02:49Z"
 * modality = $DCM#CT "Computed Tomography"
 * numberOfSeries = 1

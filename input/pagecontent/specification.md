@@ -152,13 +152,17 @@ The Imaging Server SHALL support these search parameter combinations:
 | Query | Use case |
 |---|---|
 | `patient=123` | List the patient's studies accessible under this authorization |
-| `patient=123&identifier=urn:oid:1.2.3` | Look up one study by DICOM Study Instance UID |
+| `patient=123&identifier={system}%7C{value}`<br/>`patient=123&identifier={value}` | Look up studies by study identifier — such as DICOM Study Instance UID (`identifier=urn:dicom:uid%7Curn:oid:1.2.3` or `identifier=urn:oid:1.2.3`), Accession Number (`identifier=http://hospital.example.org/accession%7CACC-2023-0042` or `identifier=ACC-2023-0042`), or another identifier on `ImagingStudy.identifier` |
 
 The Imaging Server SHOULD also support these search parameter combinations:
 
 | Query | Use case |
 |---|---|
 | `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Filter for `ImagingStudy` resources created or modified since a given timestamp |
+
+**Accession Number representation and lookup (FHIR R4).** This publication is based on FHIR R4. Clinical reports (`DiagnosticReport`, `ServiceRequest`) often carry the order's Accession Number rather than the DICOM Study Instance UID. When the Imaging FHIR Server knows a study's Accession Number—including when it is present in the study's DICOM metadata in Accession Number (0008,0050)—it SHALL include it in `ImagingStudy.identifier[accession]` (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known) and SHALL support searching by `patient` + `identifier`. Because one order can produce multiple studies, an Accession Number search may return more than one `ImagingStudy`.
+
+Accession Number guidance differs by FHIR version. Implementations supporting other FHIR versions should follow the recommendations for the version they support; see, for example, the guidance on `ImagingStudy.basedOn.identifier` in [FHIR R5](https://hl7.org/fhir/R5/imagingstudy.html#notes) and the [FHIR R6 draft](https://build.fhir.org/imagingstudy.html#accession-number). This publication does not preclude additional representations of Accession Numbers, such as those used by [IHE MADO](https://profiles.ihe.net/RAD/MADO/index.html).
 
 **Resource change filtering (`_lastUpdated`).** Following [US Core `_lastUpdated` guidance](https://hl7.org/fhir/us/core/general-guidance.html#searching-using-lastupdated), servers SHOULD support `patient` + `_lastUpdated`. Servers that support it SHALL document in their developer documentation which changes update `_lastUpdated`. Because `_lastUpdated` reflects changes to the FHIR `ImagingStudy` resource, it does not necessarily change on in-place DICOM edits and does not report studies that were deleted, reassigned, or newly restricted.
 
