@@ -145,8 +145,15 @@ The Imaging Server SHALL support these search parameter combinations:
 | Query | Use case |
 |---|---|
 | `patient=123` | List the patient's studies accessible under this authorization |
-| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Incremental sync: only studies updated since the app last checked |
 | `patient=123&identifier=urn:oid:1.2.3` | Look up one study by DICOM Study Instance UID |
+
+The Imaging Server SHOULD also support these search parameter combinations:
+
+| Query | Use case |
+|---|---|
+| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Filter for `ImagingStudy` resources created or modified since a given timestamp |
+
+**Resource change filtering (`_lastUpdated`).** Following [US Core `_lastUpdated` guidance](https://hl7.org/fhir/us/core/general-guidance.html#searching-using-lastupdated), servers SHOULD support `patient` + `_lastUpdated`. Servers that support it SHALL document in their developer documentation which changes update `_lastUpdated`. Because `_lastUpdated` reflects changes to the FHIR `ImagingStudy` resource, it does not necessarily change on in-place DICOM edits and does not report studies that were deleted, reassigned, or newly restricted.
 
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. An Endpoint may be a response-local Bundle entry, a separately addressable resource included in the Bundle, or a contained resource within an `ImagingStudy`. Apps SHALL support all three forms and resolve references using the [FHIR Bundle reference-resolution rules](https://hl7.org/fhir/R4/bundle.html#references). See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 
@@ -158,14 +165,16 @@ When `status` is `available`, the study carries at least one study-level **endpo
 
 Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with WADO-RS and QIDO-RS Endpoints](ImagingStudy-imaging-study-wado-and-qido.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [search response with a response-local capability Endpoint](Bundle-imaging-capability-search-response.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
 
-**Delayed search results: 503 and Retry-After.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request. Rather than holding the connection open, the server MAY respond:
+**Delayed or incomplete search results.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request, or a service aggregating across more than one archive. Rather than holding the connection open, the server MAY respond:
 
 ```
 HTTP/1.1 503 Service Unavailable
 Retry-After: 30
 ```
 
-The app SHOULD wait the indicated number of seconds and repeat the identical request. Once results are ready, the server responds normally with the Bundle.
+The app SHOULD wait the indicated delay and repeat the identical request. Once results are ready, the server responds normally with the Bundle.
+
+When some studies are ready while another backing source is still responding or unreachable, the server MAY instead return the available `ImagingStudy` matches (`entry.search.mode = "match"`) together with an `OperationOutcome` entry (`entry.search.mode = "outcome"`, `issue.code = "incomplete"`). An app can repeat the search later to obtain the remaining results.
 
 **Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the `patient` search parameter SHALL match the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
 
