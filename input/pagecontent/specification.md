@@ -51,12 +51,14 @@ The app presents the same SMART access token for clinical FHIR access, `ImagingS
 <p><em>This example shows App Launch, with the same SMART access token used for clinical data, study search, and WADO-RS retrieval.</em></p>
 </div>
 
-**Obtaining a token.** The app runs a standard SMART App Launch flow (for example, a standalone launch) against the Authorization Server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`. The user approves sharing, and the app receives a token response with patient context:
+**Obtaining a token.** The app runs a standard SMART App Launch flow (for example, a standalone launch) against the Authorization Server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`, along with any needed launch context or refresh scopes (such as `launch/patient` and `online_access`). The user approves sharing, and the app receives a token response with the granted scopes and patient context:
 
 ```js
 {
   "access_token": "access-token-value-unguessable",
+  "token_type": "Bearer",
   "expires_in": 3600,
+  "scope": "launch/patient patient/ImagingStudy.rs online_access",
   "refresh_token": "refresh-token-value-unguessable-and-long-lasting",
   "patient": "123"
 }
