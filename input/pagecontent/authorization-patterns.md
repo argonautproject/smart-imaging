@@ -26,19 +26,19 @@ The DICOMweb service can combine several sources of information to decide whethe
 
 * **Access token** — The credential an app presents to show which authorization it is using. The service checks that the token is valid for the request and uses its validated client identity, scopes, and any supplied patient or user context. An opaque token can be checked through introspection without requiring the service to interpret its contents.
 
-* **Capability URL** — A retrieval URL that carries or identifies study-specific permissions bound to the app’s SMART token. It lets the Imaging FHIR Server pass a release decision to the DICOMweb Server. The permission may be encoded in protected URL contents or stored by the retrieval service under an opaque identifier. The DICOMweb Server validates the token, the capability, and their binding.
+* **Signed study-context URL (`Endpoint.address` path context)** — A study-specific WADO-RS base URL whose path carries cryptographically signed context: the permitted `Study Instance UID`, any series restrictions, and the inputs the release decision depended on. It lets the Imaging FHIR Server pass context and a pre-evaluated decision to the DICOMweb Server.
 
 * **Token introspection** — The Authorization Server can supply the token’s status, granted scopes, client identity, and available user or patient context. Standard introspection fields do not necessarily express all the study-level restrictions the service needs to enforce.
 
-* **A FHIR query using the caller’s token** — The service validates the token for the requested retrieval and queries the trusted Imaging FHIR Server for the patient and Study Instance UID using that same token. The Imaging FHIR Server applies the caller’s study-access policy; an authorized matching result establishes the study-specific permission. The token must be valid for both services.
+* **A FHIR query using the caller’s token** — The service validates the token for the requested retrieval and queries the trusted Imaging FHIR Server for the patient and Study Instance UID using that same token. The Imaging FHIR Server applies the caller’s study-access policy; an authorized matching result establishes the study-specific permission. The token must be valid for both services. This replays the caller's token between services; an explicit decision API avoids that.
 
 * **An explicit authorization-decision API** — Instead of querying ImagingStudy, the service can ask directly whether the original caller is permitted to retrieve a study. The requesting service authenticates itself and supplies trusted caller context. This guide does not define that internal API.
 
 * **Locally configured or shared policy** — The service can apply its own configured rules or consult policy shared with the Authorization Server or Imaging FHIR Server. The cooperating systems agree how the relevant permissions and policy changes are communicated and enforced.
 
-These mechanisms can be combined. For example, a DICOMweb service might validate a token through introspection, validate a token-bound capability URL for the requested study, and consult an internal decision service for current consent restrictions. Another might validate the token and enforce a capability issued after the Imaging FHIR Server has evaluated those restrictions.
+These mechanisms can be combined. For example, a DICOMweb service might validate a token through introspection and verify a signed study-context segment in the WADO-RS base URL, or consult an internal decision service for current consent restrictions.
 
-The client presents the same SMART token for study search and every image retrieval, using the Endpoint returned by the Imaging FHIR Server. This applies to App Launch and Backend Services; the client does not need to inspect the URL to determine how the server evaluates access.
+The client presents its valid SMART token for study search and every image retrieval at the SMART WADO-RS Endpoint designated by the trusted Imaging FHIR Server. This applies to App Launch and Backend Services; the client treats `Endpoint.address` as an opaque base URL and does not need to inspect it to determine how the server evaluates access.
 
 ### Ways to divide authorization responsibilities
 
@@ -56,19 +56,24 @@ A gateway provides both the Imaging FHIR Server and DICOMweb Server. It combines
 
 For Elena’s request, the gateway applies the configured proxy-access restrictions. For the quality-review service’s request, it applies the health system’s configured cardiac-study permissions. Its own archive credentials may allow broader access, but it releases only what the requesting client is permitted to retrieve. Other client-accessible routes must not bypass that enforcement.
 
-#### The Imaging FHIR Server issues a capability URL; DICOMweb enforces its permissions
+#### The Imaging FHIR Server returns a signed study-context URL; DICOMweb enforces its context
 
-The Imaging FHIR Server evaluates the caller’s permissions and returns a capability URL for each permitted study. The DICOMweb Server validates the capability, the app’s SMART token, and their binding before retrieving images. The services agree how to represent and enforce the permissions carried by the URL.
+When the Imaging FHIR Server and DICOMweb Server do not share a runtime database, the Imaging FHIR Server can evaluate the caller’s permissions during `ImagingStudy` search and return a study-specific `Endpoint.address` whose path includes a cryptographically signed context segment (for example, `https://imaging.example.org/wado-ctx/{signed-context}`).
 
 <div style="margin: 1.5em 0;">
-<img src="authorization-grant.svg" alt="A separate imaging study service evaluates study permissions and returns capability URLs. DICOMweb validates the capabilities before reading the archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
+<img src="authorization-grant.svg" alt="A separate imaging study service evaluates study permissions and returns signed study-context URLs. DICOMweb validates the token and signed context before reading the archive." style="display: block; width: 100%; max-width: 960px; height: auto; margin: 0 auto;"/>
 </div>
 
-The client presents the SMART token used for the study search when retrieving images through the capability URL. The DICOMweb Server checks the token's validity, the capability's binding to that token, and all applicable restrictions.
+For example, in a Backend Services flow (`system/ImagingStudy.rs`), a WADO-RS request carries `/studies/{StudyInstanceUID}` and a system-scoped token whose introspection response does not name a patient. Packing the clinical FHIR `Patient` logical ID, the permitted `Study Instance UID`, any series subset restrictions, and the decision inputs into the signed URL path lets a stateless DICOMweb proxy evaluate the request (or make a targeted callback by FHIR `Patient` ID) without maintaining its own DICOM-to-FHIR patient index.
 
-Return token-specific Endpoints as response-local Bundle entries, as described in [Finding studies](specification.html#finding-studies). The [Bundle example](Bundle-imaging-capability-search-response.html) shows the UUID reference and HTTPS retrieval address.
+To implement this pattern safely while preserving standard WADO-RS behavior for clients:
 
-The capability is carried in the returned Endpoint’s WADO-RS base URL; the client constructs study and other retrieval paths as specified in [Retrieving images](specification.html#retrieving-images). The issuer and retrieval service agree how to represent and validate capabilities within the guide’s lifetime and access requirements. The service rejects requests that substitute an unauthorized study identifier into a valid retrieval URL.
+1. **Cryptographically sign the context and always validate the SMART token:** Protect the path context with a cryptographic signature (do not rely on unguessable URL strings alone) and validate on every request that the presented SMART token is active, authorized for the endpoint, and carries an appropriate imaging scope.
+2. **Lock the URL to the authorized study and subset:** Verify that `/studies/{uid}` (and any `/series/{uid}` or `/instances/{uid}`) appended by the client matches the study and authorized subset in the signed context. Respond to a mismatch as for any resource not released to the caller, following [PS3.18 §8.5](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.5.html).
+3. **Support token renewal and re-evaluate when context differs:** Bind the signed context to every input the release decision depended on: client, patient, scopes, and the user where policy is user-specific. A token matching on all of these can rely on the context, including refreshed or newly issued tokens. If the token differs on any input, cannot establish one, or a policy timestamp in the context has elapsed, re-evaluate access with the Imaging FHIR Server or decision service. If that service is unavailable, do not release data.
+4. **Treat the context as readable:** A signature protects integrity, not confidentiality. Include only what is acceptable in URLs and access logs, or encrypt the context.
+
+Servers returning study-specific Endpoints can include them as contained resources or response-local Bundle entries (`urn:uuid:...`), as shown in the [Bundle example](Bundle-imaging-study-context-search-response.html).
 
 #### DICOMweb requests an access decision before retrieval
 
@@ -88,11 +93,11 @@ The implementation needs to handle unavailable decision services and avoid circu
 
 #### Expiry and policy changes
 
-Each retrieval requires a valid SMART token. Capability URLs are also subject to their own expiry and revocation conditions. Document how capabilities expire, how decisions are cached, and how policy changes take effect. A refreshed token may require a new Endpoint from an authorized study search. See the [lifetime and recovery requirements](specification.html#retrieving-images).
+Each retrieval requires a currently valid SMART token covering the study. Document how authorization decisions are cached and how consent or policy changes take effect.
 
 #### Audit records
 
-Record the client, any represented user, the patient, and the study. Correlate the presented token, any capability, and the retrieval decision without exposing credentials in logs.
+Record the client, any represented user, the patient, and the study. Correlate the presented token and the retrieval decision without exposing credentials in logs.
 
 #### All retrieval paths
 

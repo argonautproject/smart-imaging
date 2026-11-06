@@ -91,21 +91,21 @@ Description: "An MR study that references a standalone WADO-RS Endpoint resource
 * series.instance.number = 1
 * series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.4
 
-// ---------- Search response with a response-local capability Endpoint ----------
+// ---------- Search response with a response-local study-context Endpoint ----------
 
-Instance: capability-endpoint-inline
+Instance: study-context-endpoint-inline
 InstanceOf: SmartWadoEndpoint
 Usage: #inline
 * id = "7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
 * status = #active
 * connectionType = $ConnType#dicom-wado-rs
 * payloadType = $PayloadType#any
-* address = "https://imaging.example.org/wado-capability/opaque-example-capability"
+* address = "https://imaging.example.org/wado-ctx/opaque-study-context"
 
-Instance: capability-study-inline
+Instance: study-context-study-inline
 InstanceOf: SmartImagingStudy
 Usage: #inline
-* id = "imaging-study-capability"
+* id = "imaging-study-context"
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
 * status = #available
@@ -129,27 +129,27 @@ Usage: #inline
 * series.instance[2].number = 3
 * series.instance[2].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
 
-Instance: imaging-capability-search-response
+Instance: imaging-study-context-search-response
 InstanceOf: Bundle
 Usage: #example
-Title: "ImagingStudy search with a response-local capability Endpoint"
+Title: "ImagingStudy search with a response-local study-context Endpoint"
 Description: """
-An authorized search response containing a CT study and an Endpoint specific
-to the requesting SMART token. The ImagingStudy references the Endpoint's
-urn:uuid fullUrl. The client resolves that reference within this Bundle, appends
-the study path to Endpoint.address, and presents the same SMART access token
-when retrieving DICOM data. The retrieval service validates the token, the
-capability, and their binding. The URL and UUID are illustrative values.
+An authorized search response containing a CT study and a response-local
+Endpoint entry whose `urn:uuid` fullUrl is referenced from `ImagingStudy.endpoint`.
+The client resolves that reference within this Bundle, treats `Endpoint.address`
+as an opaque WADO-RS base URL, appends `/studies/{Study Instance UID}`, and
+presents any currently valid SMART access token covering the study. The URL
+and UUID are illustrative values.
 """
 * type = #searchset
 * total = 1
 * link[0].relation = "self"
 * link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=patient-example&_include=ImagingStudy:endpoint"
-* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-capability"
-* entry[0].resource = capability-study-inline
+* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-context"
+* entry[0].resource = study-context-study-inline
 * entry[0].search.mode = #match
 * entry[1].fullUrl = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
-* entry[1].resource = capability-endpoint-inline
+* entry[1].resource = study-context-endpoint-inline
 * entry[1].search.mode = #include
 
 // ---------- Search response Bundle ----------
