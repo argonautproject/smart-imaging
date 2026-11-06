@@ -228,6 +228,56 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 [DICOM instances, one part each]
 ```
 
+<a id="transfer-syntax-negotiation"></a>
+
+**Transfer syntax negotiation.** An app states which transfer syntaxes it can accept, in order of preference, in the `Accept` header of each WADO-RS retrieval. `Accept` takes a comma-separated list of media types with `q` weights ([PS3.18 §8.7.5](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.5.html)); an item without a weight counts as `q=1`, the top preference. When `transfer-syntax` is omitted, [PS3.18 §8.7.3](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.3.html) defaults to uncompressed Explicit VR Little Endian (`1.2.840.10008.1.2.1`).
+
+Four request patterns cover most uses:
+
+1. **Lossless compression, by preference.** An app that wants smaller payloads without losing fidelity lists the lossless compressed syntaxes it decodes, followed by uncompressed Explicit VR Little Endian (`1.2.840.10008.1.2.1`). Apps that only decode standard transfer syntaxes omit `*` so archives holding instances in proprietary or specialized syntaxes transcode to a listed syntax rather than returning unparseable bytes:
+
+   ```
+   Accept: multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.90,
+           multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.80; q=0.9,
+           multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.70; q=0.8,
+           multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.1; q=0.6
+   ```
+
+2. **Uncompressed.** An app that wants uncompressed pixel data requests Explicit VR Little Endian:
+
+   ```
+   Accept: multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.1
+   ```
+
+3. **As stored.** An app that will archive, forward, or donate a study — or that can decode any transfer syntax defined by the DICOM Standard — requests `transfer-syntax=*` (either alone or as a lower-weighted fallback, such as `transfer-syntax=*; q=0.5`) to obtain each instance as stored:
+
+   ```
+   Accept: multipart/related; type=application/dicom; transfer-syntax=*
+   ```
+
+4. **Lossy, for viewing.** An app that needs to display a study quickly over a constrained connection lists a lossy syntax first with a lossless or uncompressed fallback. Because lossy output is not full fidelity, an app that will store or share the study SHOULD retrieve a lossless or as-stored copy:
+
+   ```
+   Accept: multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.50,
+           multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.4.90; q=0.8,
+           multipart/related; type=application/dicom; transfer-syntax=1.2.840.10008.1.2.1; q=0.6
+   ```
+
+**Server transfer-syntax requirements.**
+
+<div style="text-align: center; margin: 1.5em 0;">
+<img src="transfer-syntax-decision.svg" alt="Flowchart: for each instance, the server walks the app's Accept list from highest q to lowest. If the item is * or matches the stored syntax, send as stored (an instance stored in a private syntax is sent in a standard syntax unless the request lists it). Otherwise, if the server can produce that syntax, re-encode losslessly or compress lossily (setting Lossy Image Compression 0028,2110 = 01 with ratio and method) and send; if no item in Accept can be produced, return 406 Not Acceptable." style="max-width: 100%; height: auto;"/>
+</div>
+
+* Explicit VR Little Endian gives every app a representation it can read, so servers SHALL support `transfer-syntax=1.2.840.10008.1.2.1` (Explicit VR Little Endian, also the default when `transfer-syntax` is omitted) for every instance, except where the pixel data is available only in a lossy transfer syntax defined by the DICOM Standard, or is too long to encode in that syntax ([PS3.18 §8.7.3](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.3.html)). In those cases, the server SHALL be able to return the instance in a transfer syntax defined by the DICOM Standard. A lightweight file-backed server without runtime transcoding can meet this requirement by storing files in Explicit VR Little Endian.
+* `transfer-syntax=*` lets an app receive what the archive holds, so servers SHALL support it, returning each instance as stored without adding lossy compression. Instances already stored in a lossy syntax are returned in that form. Servers SHOULD NOT return a private transfer syntax unless the request lists it explicitly, and SHOULD answer `transfer-syntax=*` for such an instance with a transfer syntax defined by the DICOM Standard.
+* Servers SHOULD support common lossless compressed transfer syntaxes — JPEG 2000 Lossless (`1.2.840.10008.1.2.4.90`), JPEG-LS Lossless (`1.2.840.10008.1.2.4.80`), and JPEG Lossless, Non-Hierarchical, First-Order Prediction (`1.2.840.10008.1.2.4.70`).
+* Servers MAY offer lossy transfer syntaxes and SHALL apply lossy compression only when a lossy syntax is listed in `Accept` and selected by preference order, setting Lossy Image Compression `(0028,2110)` to `01` along with the compression ratio and method ([PS3.3 §C.7.6.1.1.5](https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.html#sect_C.7.6.1.1.5)).
+* Every response part SHALL declare the transfer syntax of the returned instance in its `Content-Type` header (`Content-Type: application/dicom; transfer-syntax=...`).
+* If the server cannot provide any transfer syntax accepted by the request, it SHALL respond `406 Not Acceptable`.
+
+After a `406`, an app can request smaller resources, such as individual series or instances, to find which ones can be provided in the syntaxes it accepts.
+
 **Additional retrieval operations.** Further WADO-RS capabilities enable richer app behavior (progressive loading, thumbnails, viewing without a full download). Servers SHOULD also support:
 
 * **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
