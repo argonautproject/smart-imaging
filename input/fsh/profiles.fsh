@@ -5,9 +5,13 @@ Title: "SMART ImagingStudy"
 Description: """
 An ImagingStudy returned by a SMART Imaging Access server, with a DICOM Study
 Instance UID identifier and, when the study status is `available`, at least one
-SMART WADO-RS Endpoint for retrieving its DICOM data.
+SMART WADO-RS Endpoint for retrieving its DICOM data. When `status` is
+`available`, the study SHALL list its released series (with `uid`, `number`,
+`modality`, and `numberOfInstances`) and each series SHALL list its
+released instances (with `uid`, `number`, and `sopClass`).
 """
 * obeys smart-wado-endpoint-when-available
+* obeys smart-hierarchy-when-available
 * identifier 1..* MS
 * identifier ^short = "Study identifiers (DICOM Study Instance UID required; Accession Number required when known)"
 * identifier ^definition = "Identifiers for the study. Every study SHALL include its DICOM Study Instance UID in the `dicomUid` slice (`system = urn:dicom:uid`, `value = urn:oid:...`). When the server knows a study's Accession Number, it SHALL also include it in the `accession` slice (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known), and SHOULD additionally populate `basedOn.identifier` for FHIR R6 and IHE MADO compatibility."
@@ -54,11 +58,18 @@ SMART WADO-RS Endpoint for retrieving its DICOM data.
 * numberOfSeries MS
 * numberOfInstances MS
 * series MS
+* series ^short = "Series in the released study (Must Support; populated when the study has series)"
+* series ^definition = "Series included in the released study (`0..* MS`; populated whenever the study has series in the released subset). When access policy restricts specific series or instances, `numberOfSeries`, `numberOfInstances`, `series`, and `series.instance` SHALL reflect the authorized subset."
 * series.uid MS
 * series.number MS
 * series.modality MS
 * series.numberOfInstances MS
+* series.endpoint MS
+* series.endpoint ^short = "Series-specific endpoint(s) (WADO-RS series.endpoint overrides study WADO-RS endpoint for this series)"
+* series.endpoint ^definition = "Optional endpoint(s) for this series. Per FHIR R4, a `series.endpoint` overrides a study-level `endpoint` of the same `connectionType` for that series. Any WADO-RS endpoint (`connectionType = dicom-wado-rs`) on `series.endpoint` SHALL conform to `SmartWadoEndpoint`, be designated by the trusted Imaging FHIR Server, and support series- and instance-level WADO-RS retrieval for that series. A series-level endpoint does not replace the required study-level WADO-RS endpoint on an `available` study."
 * series.instance MS
+* series.instance ^short = "Instances in the series (Must Support; populated for each instance in the series)"
+* series.instance ^definition = "Instances included in the series (`0..* MS`), giving clients a complete inventory of SOP Instance UIDs and SOP Classes upfront (for example, to retrieve a single slice, waveform, structured report, or Key Object Selection document). Compatible with IHE MADO (including its `MadoKeyObjectDocumentTitle` extension for conveying Key Object Selection document titles)."
 * series.instance.uid MS
 * series.instance.number MS
 * series.instance.sopClass MS
@@ -67,6 +78,11 @@ Invariant: smart-wado-endpoint-when-available
 Description: "When status is 'available', at least one SMART WADO-RS endpoint is required."
 Severity: #error
 Expression: "status = 'available' implies endpoint.resolve().where(connectionType.system = 'http://terminology.hl7.org/CodeSystem/endpoint-connection-type' and connectionType.code = 'dicom-wado-rs').exists()"
+
+Invariant: smart-hierarchy-when-available
+Description: "When status is 'available', the study lists its released series and each series lists its released instances."
+Severity: #error
+Expression: "status = 'available' implies (series.exists() and series.all(instance.exists()))"
 
 Profile: SmartWadoEndpoint
 Parent: Endpoint
