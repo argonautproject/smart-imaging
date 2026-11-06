@@ -44,6 +44,6 @@ A clinical record can identify a study by Study Instance UID, Accession Number, 
 
 DICOM requires each Study Instance UID to identify a single study, though archives occasionally coerce UIDs during import or contain historical collisions across patients. A study's UID should not change without a clinical reason. Before exposing studies through SMART Imaging Access, deployments need to ensure that each exposed Study Instance UID maps to the intended patient so that UID-based lookups and WADO-RS retrievals cannot cross patient records.
 
-To map `Patient/123` to its PACS records, the Imaging FHIR Server can fetch that Patient from the Clinical FHIR Server and obtain its MRN. See the Backend Services example in [Authorization](specification.html#authorization).
+To map `Patient/123` to its PACS records, the Imaging FHIR Server can fetch that Patient from the Clinical FHIR Server and obtain its MRN. See [Authorization](specification.html#authorization).
 
 Representation of imaging reports in FHIR is covered by jurisdiction-specific implementation guides, such as [US Core](https://www.hl7.org/fhir/us/core/). The model above reflects the direction of early consensus.
