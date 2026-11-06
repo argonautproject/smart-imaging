@@ -22,24 +22,8 @@ Services, or both, as defined in [Authorization](specification.html#authorizatio
 Supported modes are advertised for each imaging endpoint with the corresponding
 capability http://fhir.org/argonaut/smart-imaging/capabilities/app-launch or
 http://fhir.org/argonaut/smart-imaging/capabilities/backend-services (or both).
-The Authorization Server SHALL authorize the participating resource servers for
-the flow, and both the Imaging FHIR Server and DICOMweb Server SHALL verify
-that the token is active and authorized for use at their endpoint. The Imaging
-Server enforces granted scopes and underlying access restrictions. App Launch
-requests SHALL match the token's patient context. Backend Services requests
-SHALL be limited to the client's pre-authorized access; system/ImagingStudy.rs
-does not grant access to all patients or studies. Missing patient context SHALL
-NOT imply system-level access. The Imaging FHIR Server SHALL designate only
-WADO-RS Endpoint addresses operated within the deployment's authorization
-arrangement. Clients send their SMART access token only to the Authorization
-Server, the authorized Clinical FHIR Server, the discovered or configured
-Imaging FHIR Server, and the SMART WADO-RS endpoints designated by that Imaging
-FHIR Server (never to non-WADO-RS Endpoint addresses on the study, untrusted
-resources, or cross-origin redirects). On every WADO-RS retrieval, the DICOMweb
-Server SHALL validate the presented token, enforce all applicable study and
-series restrictions, and accept any currently valid SMART token from the
-Authorization Server that authorizes access to the study (including tokens
-obtained through refresh or subsequent token requests). See
+Token validation and access enforcement are defined in
+[Authorization](specification.html#authorization) and
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
