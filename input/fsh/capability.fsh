@@ -5,7 +5,7 @@ Title: "SMART Imaging Access Server"
 Description: "Requirements for a SMART Imaging Access FHIR endpoint."
 * name = "SmartImagingAccessServer"
 * status = #draft
-* date = "2026-09-23"
+* date = "2026-11-06"
 * kind = #requirements
 * fhirVersion = #4.0.1
 * format = #json
@@ -22,17 +22,24 @@ Services, or both, as defined in [Authorization](specification.html#authorizatio
 Supported modes are advertised for each imaging endpoint with the corresponding
 capability http://fhir.org/argonaut/smart-imaging/capabilities/app-launch or
 http://fhir.org/argonaut/smart-imaging/capabilities/backend-services (or both).
-The Imaging Server validates the token and enforces granted scopes and underlying
-access restrictions. App Launch requests SHALL match the token's patient context.
-Backend Services requests SHALL be limited to the client's pre-authorized access;
-system/ImagingStudy.rs does not grant access to all patients or studies.
-Missing patient context SHALL NOT imply system-level access. Every WADO-RS
-request SHALL carry the same SMART access token used for the authorized FHIR
-request. A returned Endpoint address may be a capability URL; the DICOMweb
-Server then validates the token, the capability, and their binding and enforces
-all applicable restrictions. Capability issuance SHALL be limited to the data
-and operations authorized by the FHIR request. Each retrieval SHALL enforce the
-validation, lifetime, and revocation requirements in
+The Authorization Server SHALL authorize the participating resource servers for
+the flow, and both the Imaging FHIR Server and DICOMweb Server SHALL verify
+that the token is active and authorized for use at their endpoint. The Imaging
+Server enforces granted scopes and underlying access restrictions. App Launch
+requests SHALL match the token's patient context. Backend Services requests
+SHALL be limited to the client's pre-authorized access; system/ImagingStudy.rs
+does not grant access to all patients or studies. Missing patient context SHALL
+NOT imply system-level access. The Imaging FHIR Server SHALL designate only
+WADO-RS Endpoint addresses operated within the deployment's authorization
+arrangement. Clients send their SMART access token only to the Authorization
+Server, the authorized Clinical FHIR Server, the discovered or configured
+Imaging FHIR Server, and the SMART WADO-RS endpoints designated by that Imaging
+FHIR Server (never to non-WADO-RS Endpoint addresses on the study, untrusted
+resources, or cross-origin redirects). On every WADO-RS retrieval, the DICOMweb
+Server SHALL validate the presented token, enforce all applicable study and
+series restrictions, and accept any currently valid SMART token from the
+Authorization Server that authorizes access to the study (including tokens
+obtained through refresh or subsequent token requests). See
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
@@ -46,9 +53,10 @@ their developer documentation which changes update `_lastUpdated`.
 The server SHALL support `_include=ImagingStudy:endpoint`
 so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
 provided as response-local Bundle entries, separately addressable resources
-included in the Bundle, or contained resources. Response-specific capability
-Endpoints SHOULD use urn:uuid fullUrl values; the server SHALL include them on
-the same Bundle page as each referencing study, even without an _include request.
+included in the Bundle, or contained resources. Servers MAY use response-local
+Endpoints. A response-local Endpoint uses a `urn:uuid` value in
+`Bundle.entry.fullUrl`; the server SHALL include it on
+the same Bundle page as each referencing study, even without an `_include` request.
 
 Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
 patient-context mismatches and backend requests for unauthorized patients receive

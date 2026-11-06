@@ -73,17 +73,21 @@ Parent: Endpoint
 Id: smart-wado-endpoint
 Title: "SMART WADO-RS Endpoint"
 Description: """
-A DICOM WADO-RS endpoint referenced from a SMART ImagingStudy.
+A DICOM WADO-RS endpoint referenced from a SMART ImagingStudy and designated by
+the trusted Imaging FHIR Server for DICOM retrieval.
 
-The `address` is a WADO-RS base URL: the app appends
-`/studies/{Study Instance UID}` (and optionally deeper paths) and presents
-the same SMART access token used for the authorized FHIR request.
+The `address` is an opaque WADO-RS base URL: the app preserves any path prefix,
+appends `/studies/{Study Instance UID}` (and optionally deeper paths), and
+presents a currently valid SMART access token covering the study.
 
-The address may be a capability URL carrying study-specific permissions bound
-to that token. For these response-specific Endpoints, servers SHOULD use a
-Bundle entry with a `urn:uuid:...` fullUrl, referenced by ImagingStudy.endpoint.
-The UUID identifies the Endpoint within the response; `address` remains the
-HTTPS retrieval base URL. See [Finding studies](specification.html#finding-studies).
+A server may return a shared WADO-RS base URL across studies or a study-specific
+base URL (for example, carrying signed study context in the URL path as
+described in [Implementing Study-Level Authorization](authorization-patterns.html)).
+Servers MAY use response-local Endpoints. A response-local Endpoint uses a
+`urn:uuid` value in `Bundle.entry.fullUrl`, referenced by
+`ImagingStudy.endpoint`. The UUID identifies the Endpoint within the response;
+`address` remains the HTTPS retrieval base URL. See
+[Finding studies](specification.html#finding-studies).
 """
 * status MS
 * connectionType MS
