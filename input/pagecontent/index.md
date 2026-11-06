@@ -18,7 +18,7 @@ The guide supports both [SMART App Launch](specification.html#app-launch), for u
 2. **Authorize** — The app completes SMART App Launch and receives an access token with patient context. Where Backend Services is supported, a pre-authorized client instead obtains a system-scoped token through SMART Backend Services. ([Authorization](specification.html#authorization))
 3. **Query clinical data** *(optional)* — The app uses the token against the Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
 4. **Find studies** — The app searches the imaging endpoint for the patient's `ImagingStudy` resources, each of which links to a WADO-RS endpoint. ([Finding studies](specification.html#finding-studies))
-5. **Fetch images** — The app retrieves DICOM data from the returned WADO-RS endpoint, presenting the same SMART access token. ([Retrieving images](specification.html#retrieving-images))
+5. **Fetch images** — The app retrieves DICOM data from the returned WADO-RS endpoint, presenting a currently valid SMART access token. ([Retrieving images](specification.html#retrieving-images))
 
 ### Actors
 
@@ -46,7 +46,7 @@ In scope:
 
 * Discovering an imaging endpoint through SMART configuration or direct configuration
 * Reusing the SMART access token issued by the Authorization Server for imaging requests, with server-side validation (for example, via [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html))
-* Using token-bound capability URLs to carry study-specific permissions between cooperating services
+* Enforcing patient- and study-level access permissions across the Imaging FHIR Server and DICOMweb Server
 * Searching `ImagingStudy` by patient and retrieving DICOM data via WADO-RS
 * Backend Services access, with system scopes and enforcement of each client's pre-authorized permissions
 
