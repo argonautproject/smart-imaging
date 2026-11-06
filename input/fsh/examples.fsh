@@ -108,6 +108,19 @@ Usage: #inline
 * numberOfSeries = 1
 * numberOfInstances = 3
 * endpoint[wadoRs].reference = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
+* series.uid = "1.2.840.99999999.19341866.1571297684.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 3
+* series.instance[0].uid = "1.2.840.99999999.19341866.1571297684.1.1"
+* series.instance[0].number = 1
+* series.instance[0].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[1].uid = "1.2.840.99999999.19341866.1571297684.1.2"
+* series.instance[1].number = 2
+* series.instance[1].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[2].uid = "1.2.840.99999999.19341866.1571297684.1.3"
+* series.instance[2].number = 3
+* series.instance[2].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
 
 Instance: imaging-capability-search-response
 InstanceOf: Bundle
@@ -181,3 +194,52 @@ Description: "A CT study carrying both a contained SMART WADO-RS Endpoint for DI
 * numberOfInstances = 3
 * endpoint[wadoRs].reference = "#e"
 * endpoint[1].reference = "#qido"
+* series.uid = "1.2.840.99999999.19341866.1571297684.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 3
+* series.instance[0].uid = "1.2.840.99999999.19341866.1571297684.1.1"
+* series.instance[0].number = 1
+* series.instance[0].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[1].uid = "1.2.840.99999999.19341866.1571297684.1.2"
+* series.instance[1].number = 2
+* series.instance[1].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[2].uid = "1.2.840.99999999.19341866.1571297684.1.3"
+* series.instance[2].number = 3
+* series.instance[2].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+
+// ---------- Study with a series-level WADO-RS Endpoint ----------
+
+Instance: series-wado-endpoint-contained
+InstanceOf: SmartWadoEndpoint
+Usage: #inline
+* id = "series-wado"
+* status = #active
+* connectionType = $ConnType#dicom-wado-rs
+* payloadType = $PayloadType#any
+* address = "https://specialty-archive.example.org/wado-rs"
+
+Instance: imaging-study-series-endpoint
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with a series-level WADO-RS Endpoint"
+Description: "An available study with a study-level SMART WADO-RS Endpoint covering the full study and a series-level SMART WADO-RS Endpoint overriding WADO-RS retrieval for that series."
+* contained[0] = wado-endpoint-contained
+* contained[1] = series-wado-endpoint-contained
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* started = "2023-02-24T14:02:49Z"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 1
+* numberOfInstances = 1
+* endpoint[wadoRs].reference = "#e"
+* series.uid = "1.2.840.99999999.19341866.1571297684.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 1
+* series.endpoint[0].reference = "#series-wado"
+* series.instance[0].uid = "1.2.840.99999999.19341866.1571297684.1.1"
+* series.instance[0].number = 1
+* series.instance[0].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2

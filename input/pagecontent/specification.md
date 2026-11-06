@@ -161,9 +161,13 @@ The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that r
 
 The server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**.
 
-When `status` is `available`, the study carries at least one study-level **endpoint** conforming to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html) (`connectionType = dicom-wado-rs`) — the WADO-RS base URL where the app retrieves DICOM data using its SMART token; studies with no retrievable instances (such as `registered` or `cancelled`) MAY omit `endpoint`. A study MAY also list other study-level endpoints (such as an image viewer launch endpoint or a DICOMweb QIDO-RS endpoint), provided every `available` study supplies a study-level WADO-RS endpoint covering the study. Studies should also carry descriptive detail when available — start time, series and instance counts, per-series metadata — so apps can show a useful study list before downloading anything.
+When `status` is `available`, the study carries at least one study-level **endpoint** conforming to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html) (`connectionType = dicom-wado-rs`) — the WADO-RS base URL where the app retrieves DICOM data using its SMART token; studies with no retrievable instances (such as `registered` or `cancelled`) MAY omit `endpoint`. A study MAY also list other study-level endpoints (such as an image viewer launch endpoint or a DICOMweb QIDO-RS endpoint) or series-level `ImagingStudy.series.endpoint` references, provided every `available` study supplies a study-level WADO-RS endpoint covering the study. Studies should also carry descriptive detail when available — start time, series and instance counts, per-series metadata — so apps can show a useful study list before downloading anything.
 
-Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with WADO-RS and QIDO-RS Endpoints](ImagingStudy-imaging-study-wado-and-qido.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [search response with a response-local capability Endpoint](Bundle-imaging-capability-search-response.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
+**Series endpoints and study hierarchy.** An `ImagingStudy.series.endpoint` with `connectionType = dicom-wado-rs` SHALL conform to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html), be designated by the trusted Imaging FHIR Server, and support series- and instance-level WADO-RS retrieval for that series; it overrides the study-level WADO-RS endpoint for that series while keeping the study-level WADO-RS endpoint for full-study retrieval. `_include=ImagingStudy:endpoint` includes both study- and series-level Endpoints.
+
+Apps use a study's series and instance list to confirm they received everything released, detect added or removed content, skip SOP Classes they can't process, and retrieve a single instance, such as a Key Object Selection (`urn:oid:1.2.840.10008.5.1.4.1.1.88.59`) document, without downloading a full series. When `status` is `available`, the study SHALL list its released series (with `uid`) and each series SHALL list its released instances (with `uid` and `sopClass`). This profile is compatible with [IHE MADO](https://profiles.ihe.net/RAD/MADO/index.html) (including its [`MadoKeyObjectDocumentTitle`](https://profiles.ihe.net/RAD/MADO/StructureDefinition-MadoKeyObjectDocumentTitle.html) extension for conveying a Key Object Selection document's title).
+
+Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with WADO-RS and QIDO-RS Endpoints](ImagingStudy-imaging-study-wado-and-qido.html), [study with a series-level WADO-RS Endpoint](ImagingStudy-imaging-study-series-endpoint.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [search response with a response-local capability Endpoint](Bundle-imaging-capability-search-response.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
 
 **Delayed or incomplete search results.** Some Imaging Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request, or a service aggregating across more than one archive. Rather than holding the connection open, the server MAY respond:
 
@@ -178,11 +182,11 @@ When some studies are ready while another backing source is still responding or 
 
 **Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the `patient` search parameter SHALL match the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
 
-*Scaling (non-normative).* Forwarding every search to the PACS can overload it. Caching study metadata can reduce that load. Cache invalidation can use time-based rules or change feeds from the PACS or RIS. The 503/Retry-After pattern complements caching: the first request warms the cache; retries hit it. Cache underlying study metadata separately from response-specific authorization data. For each response, apply the current authorization and assemble Endpoint entries and references for the requesting token.
+*Scaling (non-normative).* Forwarding every search to the PACS can overload it. Caching study metadata can reduce that load. Cache invalidation can use time-based rules or change feeds from the PACS or RIS. The 503/Retry-After pattern complements caching: the first request warms the cache; retries hit it. Cache underlying study metadata separately from response-specific authorization data. For each response, apply the current authorization and assemble Endpoint entries and references for the requesting token. Listing instances may require a query per series against the archive, so caching the instance inventory is especially useful.
 
 ### Retrieving images
 
-For an `available` study, its SMART WADO-RS Endpoint (`connectionType = dicom-wado-rs`) supplies a WADO-RS base URL in `Endpoint.address`. The app removes the `urn:oid:` prefix from the study's `urn:dicom:uid` identifier value and appends `/studies/{Study Instance UID}` to the base URL. It SHALL send the same SMART access token used for the authorized FHIR request in the `Authorization` header:
+For an `available` study, its SMART WADO-RS Endpoint (`connectionType = dicom-wado-rs`) supplies a WADO-RS base URL in `Endpoint.address`. For series or instance retrieval, the app uses the series' WADO-RS Endpoint when one is present. The app removes the `urn:oid:` prefix from the study's `urn:dicom:uid` identifier value and appends `/studies/{Study Instance UID}` to the base URL. It SHALL send the same SMART access token used for the authorized FHIR request in the `Authorization` header:
 
 ```
 GET https://imaging.example.org/wado-rs/studies/1.2.840.99999999.19341866.1571297684
@@ -204,7 +208,13 @@ The capability value above is illustrative. Servers SHALL use unguessable or cry
 <p><strong>Design question (non-normative):</strong> Should this guide also support bearer capability URLs, where clients are explicitly instructed not to send their SMART access token?</p>
 </div>
 
-**Full-study retrieval.** The WADO-RS endpoint SHALL support full-study retrieval with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. The response is the study's DICOM instances as a multipart body:
+**Required retrieval operations.** A SMART WADO-RS Endpoint SHALL support study-, series-, and instance-level DICOM retrieval per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html):
+
+* **Study-level** retrieval — `GET /studies/{StudyInstanceUID}`
+* **Series-level** retrieval — `GET /studies/{StudyInstanceUID}/series/{SeriesInstanceUID}`
+* **Instance-level** retrieval — `GET /studies/{StudyInstanceUID}/series/{SeriesInstanceUID}/instances/{SOPInstanceUID}`
+
+The response returns the requested DICOM instances as a `multipart/related` body:
 
 ```
 HTTP/1.1 200 OK
@@ -213,16 +223,11 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 [DICOM instances, one part each]
 ```
 
-**Additional retrieval operations.** Further WADO-RS capabilities enable richer app behavior (progressive loading, thumbnails, viewing without a full download). Servers SHOULD support, per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html):
+**Additional retrieval operations.** Further WADO-RS capabilities enable richer app behavior (progressive loading, thumbnails, viewing without a full download). Servers SHOULD also support:
 
-* **Series-level** retrieval — `GET /studies/{uid}/series/{uid}`
-* **Instance-level** retrieval — `GET /studies/{uid}/series/{uid}/instances/{uid}`
+* **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
 * **Frame-level** retrieval — `.../instances/{uid}/frames/{n}`
 * **Rendered** images — `.../rendered` at study, series, or instance level
-* **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
-* **Transfer-syntax negotiation** — re-encoding payloads to match the `Accept` header
-
-Apps SHOULD degrade gracefully: try the richer request, fall back to full-study retrieval if the server doesn't offer it.
 
 **Retrieval authorization.** The DICOMweb Server SHALL perform the token and access checks in [Authorization](#authorization) on every request. If the URL carries a capability, the server SHALL additionally validate that capability and its binding to the presented token, and enforce its permitted data and operations. These checks apply to every supported retrieval, including metadata, rendered images, instances, and frames, whether or not the client previously searched for the study.
 
