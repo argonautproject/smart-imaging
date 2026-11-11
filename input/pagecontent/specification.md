@@ -36,7 +36,7 @@ For example, a clinical FHIR endpoint at `https://clinical.example.org/fhir` who
 }
 ```
 
-The `smart-imaging-access` capability identifies the imaging interface. Which authorization modes a deployment supports is said by SMART's own metadata in the same document, as for any SMART server; there is no imaging-specific mode capability. These fields are top-level, describing the advertised Authorization Server. Advertising support does not grant access to any particular client.
+The authorization modes are advertised in the same document's top-level fields, which describe the Authorization Server:
 
 * **App Launch.** A deployment supporting App Launch SHALL advertise `authorization_code` in `grant_types_supported` and meet SMART App Launch discovery requirements.
 * **Backend Services.** A deployment supporting the [Backend Services mode](#backend-services) SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
