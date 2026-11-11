@@ -19,9 +19,9 @@ and [Authorization](specification.html#authorization).
 FHIR requests carry a SMART access token issued by the Authorization Server configured
 for the deployment. Deployments SHALL support SMART App Launch, SMART Backend
 Services, or both, as defined in [Authorization](specification.html#authorization).
-Supported modes are advertised for each imaging endpoint with the corresponding
-capability http://fhir.org/argonaut/smart-imaging/capabilities/app-launch or
-http://fhir.org/argonaut/smart-imaging/capabilities/backend-services (or both).
+Supported modes are advertised by SMART's own metadata: authorization_code or
+client_credentials (or both) in grant_types_supported, as defined in
+[Discovery](specification.html#discovery).
 Token validation and access enforcement are defined in
 [Authorization](specification.html#authorization) and
 [Retrieving images](specification.html#retrieving-images).

@@ -30,21 +30,18 @@ For example, a clinical FHIR endpoint at `https://clinical.example.org/fhir` who
   "associated_endpoints": [
     {
       "url": "https://imaging.example.org/fhir",
-      "capabilities": [
-        "smart-imaging-access",
-        "http://fhir.org/argonaut/smart-imaging/capabilities/app-launch"
-      ]
+      "capabilities": ["smart-imaging-access"]
     }
   ]
 }
 ```
 
-The `smart-imaging-access` capability identifies the imaging interface; it does not imply either authorization mode. So a deployment also advertises each mode it supports. Deployments supporting both modes SHALL advertise both mode-specific capabilities. Support for a grant type alone does not establish support for that mode at an imaging endpoint. Advertising support does not grant access to any particular client.
+The authorization modes are advertised in the same document's top-level fields, which describe the Authorization Server:
 
-* **App Launch.** A deployment supporting App Launch SHALL advertise `http://fhir.org/argonaut/smart-imaging/capabilities/app-launch` alongside `smart-imaging-access` for each imaging endpoint supporting that mode. The SMART configuration SHALL advertise `authorization_code` in `grant_types_supported` and meet SMART App Launch discovery requirements.
-* **Backend Services.** A deployment supporting the [Backend Services mode](#backend-services) SHALL additionally advertise `http://fhir.org/argonaut/smart-imaging/capabilities/backend-services` alongside `smart-imaging-access` for each imaging endpoint supporting that mode. This URI is a capability identifier, not an API endpoint. In the Clinical FHIR Server's `.well-known/smart-configuration`, the capability goes in the top-level or associated endpoint's `capabilities` array as above; `grant_types_supported` and token authentication metadata remain at the top level, describing the advertised Authorization Server. That document SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
+* **App Launch.** A deployment supporting App Launch SHALL advertise `authorization_code` in `grant_types_supported` and meet SMART App Launch discovery requirements.
+* **Backend Services.** A deployment supporting the [Backend Services mode](#backend-services) SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
 
-**What the app does.** In-band discovery requires no per-site setup for the app; apps SHOULD prefer it when available and MAY fall back to out-of-band configuration. The app reads the document above, sees `smart-imaging-access`, and knows it can search `https://imaging.example.org/fhir/ImagingStudy` with the access token it gets from the Authorization Server named in the document. Apps using in-band discovery SHALL check the corresponding imaging-specific capability; out-of-band configuration MAY establish the same support explicitly.
+**What the app does.** In-band discovery requires no per-site setup for the app; apps SHOULD prefer it when available and MAY fall back to out-of-band configuration. The app reads the document above, sees `smart-imaging-access`, and knows it can search `https://imaging.example.org/fhir/ImagingStudy` with the access token it gets from the Authorization Server named in the document. Apps using in-band discovery SHALL check `grant_types_supported` for the grant their mode uses; out-of-band configuration MAY establish the same support explicitly.
 
 ### Authorization
 
