@@ -40,6 +40,7 @@ released instances (with `uid`, `number`, and `sopClass`).
 * subject only Reference(Patient)
 * subject MS
 * subject ^short = "The patient this study belongs to"
+* subject ^definition = "The patient's Patient resource on the Clinical FHIR Server. When the Imaging FHIR Server is a separate endpoint, an absolute reference, since the Imaging FHIR Server doesn't serve Patient."
 * basedOn MS
 * basedOn ^short = "Order(s) the study fulfills (SHOULD include Accession Number in basedOn.identifier when known)"
 * basedOn ^definition = "The order(s) or request(s) that the imaging study fulfills. When the server knows a study's Accession Number, in addition to populating `identifier[accession]` (`SHALL`), it SHOULD also populate a `basedOn` reference carrying `basedOn.identifier` (`type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `value` set to the Accession Number, and `system` set to the assigning authority URI when known) for wider compatibility with FHIR R6 and IHE MADO."
