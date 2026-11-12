@@ -83,16 +83,22 @@ Apps SHALL protect both access tokens and capability URLs from unintended disclo
 
 **Authorization Server.** For deployments supporting App Launch, the Authorization Server SHALL support SMART App Launch and SHALL offer scopes permitting `ImagingStudy` read access (`patient/ImagingStudy.rs`, `patient/*.rs`, or the SMART 1.0 equivalents).
 
-**App.** The App runs a standard SMART App Launch flow (for example, a standalone launch) against the Authorization Server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`. The user approves sharing, and the App receives a token response with patient context:
+**App.** The App runs a standard SMART App Launch flow (for example, a standalone launch) against the Authorization Server, requesting scopes that cover imaging: `patient/ImagingStudy.rs` (SMART 2.0), `patient/ImagingStudy.read` (SMART 1.0), or a wildcard that includes it such as `patient/*.rs`.
+
+**Example (standalone launch).** The App requests `launch/patient patient/ImagingStudy.rs offline_access` for patient context, imaging access, and a refresh token usable beyond the user's online session. The user approves sharing, and the Authorization Server grants all requested scopes in this response:
 
 ```js
 {
   "access_token": "access-token-value-unguessable",
+  "token_type": "Bearer",
   "expires_in": 3600,
+  "scope": "launch/patient patient/ImagingStudy.rs offline_access",
   "refresh_token": "refresh-token-value-unguessable-and-long-lasting",
   "patient": "123"
 }
 ```
+
+The `scope` value reports the scopes actually granted, which can differ from those requested.
 
 The App SHALL present this `access_token` as a Bearer token for clinical FHIR reads, `ImagingStudy` searches, and WADO-RS retrievals at the designated endpoints.
 
