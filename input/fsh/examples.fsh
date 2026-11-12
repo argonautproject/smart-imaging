@@ -137,7 +137,7 @@ capability, and their binding. The URL and UUID are illustrative values.
 * type = #searchset
 * total = 1
 * link[0].relation = "self"
-* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=patient-example&_include=ImagingStudy:endpoint"
+* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2Fpatient-example&_include=ImagingStudy:endpoint"
 * entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-capability"
 * entry[0].resource = capability-study-inline
 * entry[0].search.mode = #match
@@ -155,7 +155,7 @@ Description: "What an app receives from `GET [imaging-base]/ImagingStudy?patient
 * type = #searchset
 * total = 2
 * link[0].relation = "self"
-* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=patient-example&_include=ImagingStudy:endpoint"
+* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2Fpatient-example&_include=ImagingStudy:endpoint"
 * entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-contained-endpoint"
 * entry[0].resource = imaging-study-contained-endpoint
 * entry[0].search.mode = #match

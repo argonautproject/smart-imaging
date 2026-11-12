@@ -10,6 +10,10 @@ Five identifiers do almost all the work in imaging integrations:
 | **Series Instance UID** | Imaging modality/PACS | One series within a study |
 | **SOP Instance UID** | Imaging modality/PACS | One instance (e.g., one slice) within a series |
 
+### Study UID assumption
+
+This guide assumes that a Study Instance UID exposed by the Imaging FHIR and DICOMweb Servers identifies one study for one patient. The deployment ensures this association is unambiguous even when source archives contain duplicate UIDs.
+
 ### The imaging workflow
 
 A simplified view of hospital imaging (inspired by the [IHE Radiology profiles](https://profiles.ihe.net/RAD/), with worklist details omitted):
@@ -40,8 +44,8 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 * **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
-A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `patient={id}&identifier=urn:oid:{uid}`, as described in [Finding studies](specification.html#finding-studies).
+A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `patient={patient-reference}&identifier=urn:oid:{uid}`, with the Patient reference forms described in [Finding studies](specification.html#patient-references).
 
-To map `Patient/123` to its PACS records, the Imaging FHIR Server can fetch that Patient from the Clinical FHIR Server and obtain its MRN. See the Backend Services example in [Authorization](specification.html#authorization).
+When the Patient is managed by the Clinical FHIR Server, the Imaging FHIR Server can fetch that Patient and obtain its MRN to map to PACS records. For example, `https://clinical.example.org/fhir/Patient/123` identifies a Patient on that Clinical FHIR Server. See [Authorization](specification.html#authorization).
 
 Representation of imaging reports in FHIR is covered by jurisdiction-specific implementation guides, such as [US Core](https://www.hl7.org/fhir/us/core/). The model above reflects the direction of early consensus.

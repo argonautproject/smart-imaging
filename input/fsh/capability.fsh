@@ -28,8 +28,9 @@ enforcing capability lifetime and revocation are specified in
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
-The server SHALL support searching ImagingStudy by patient, alone and in
-combination with `_lastUpdated` and `identifier` (a DICOM Study Instance UID
+The server SHALL support searching ImagingStudy by Patient logical ID using relative
+or absolute Patient references under FHIR reference-search rules, alone and in
+combination with `_lastUpdated` or `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
 for referenced study- and series-level Endpoints in the search Bundle. Apps SHALL
 resolve Endpoints provided as response-local Bundle entries, separately addressable
@@ -54,7 +55,7 @@ the app retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[0].name = "patient"
 * rest[0].resource[0].searchParam[0].definition = "http://hl7.org/fhir/SearchParameter/clinical-patient"
 * rest[0].resource[0].searchParam[0].type = #reference
-* rest[0].resource[0].searchParam[0].documentation = "The patient whose studies are requested. SHALL be supported alone and in combination with `_lastUpdated` or `identifier`."
+* rest[0].resource[0].searchParam[0].documentation = "The server SHALL support search by Patient logical ID using relative or absolute Patient references under the FHIR reference-search rules, alone and in combination with `_lastUpdated` or `identifier`. See [Finding studies](specification.html#patient-references)."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
