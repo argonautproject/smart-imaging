@@ -17,22 +17,12 @@ and [Authorization](specification.html#authorization).
 * rest[0].mode = #server
 * rest[0].security.description = """
 FHIR requests carry a SMART access token issued by the Authorization Server configured
-for the deployment. Deployments SHALL support SMART App Launch, SMART Backend
-Services, or both, as defined in [Authorization](specification.html#authorization).
-Supported modes are advertised for each imaging endpoint with the corresponding
-capability http://fhir.org/argonaut/smart-imaging/capabilities/app-launch or
-http://fhir.org/argonaut/smart-imaging/capabilities/backend-services (or both).
-The Imaging Server validates the token and enforces granted scopes and underlying
-access restrictions. App Launch requests SHALL match the token's patient context.
-Backend Services requests SHALL be limited to the client's pre-authorized access;
-system/ImagingStudy.rs does not grant access to all patients or studies.
-Missing patient context SHALL NOT imply system-level access. Every WADO-RS
-request SHALL carry the same SMART access token used for the authorized FHIR
-request. A returned Endpoint address may be a capability URL; the DICOMweb
-Server then validates the token, the capability, and their binding and enforces
-all applicable restrictions. Capability issuance SHALL be limited to the data
-and operations authorized by the FHIR request. Each retrieval SHALL enforce the
-validation, lifetime, and revocation requirements in
+for the deployment. Requirements for supported authorization modes, token acquisition,
+token validation, access enforcement, and capability issuance are specified in
+[Authorization](specification.html#authorization). Mode-specific discovery requirements
+are specified in [Discovery](specification.html#discovery). Requirements for presenting
+the same token on retrieval, validating capabilities and their token binding, and
+enforcing capability lifetime and revocation are specified in
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
