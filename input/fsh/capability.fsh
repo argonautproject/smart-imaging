@@ -19,17 +19,20 @@ and [Authorization](specification.html#authorization).
 FHIR requests carry a SMART access token issued by the Authorization Server configured
 for the deployment. Requirements for supported authorization modes, token acquisition,
 token validation, access enforcement, and capability issuance are specified in
-[Authorization](specification.html#authorization). Mode-specific discovery requirements
-are specified in [Discovery](specification.html#discovery). Requirements for presenting
-the same token on retrieval, validating capabilities and their token binding, and
+[Authorization](specification.html#authorization). Discovery of the endpoint's
+Patient-reference base is specified in [Patient-reference base](patient-identity.html#patient-reference-base);
+grant binding and per-endpoint patient context are specified in
+[Endpoint patient context](patient-identity.html#endpoint-patient-context).
+Mode-specific discovery requirements are specified in [Discovery](specification.html#discovery).
+Requirements for presenting the same token on retrieval, validating capabilities and their token binding, and
 enforcing capability lifetime and revocation are specified in
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
-The server SHALL support searching ImagingStudy by Patient logical ID using relative
-or absolute Patient references under FHIR reference-search rules, alone and in
+The server SHALL support searching ImagingStudy by the standard `patient` parameter
+according to [Patient references](patient-identity.html#patient-references), alone and in
 combination with `_lastUpdated` or `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
 for referenced study- and series-level Endpoints in the search Bundle. Apps SHALL
@@ -55,7 +58,7 @@ the app retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[0].name = "patient"
 * rest[0].resource[0].searchParam[0].definition = "http://hl7.org/fhir/SearchParameter/clinical-patient"
 * rest[0].resource[0].searchParam[0].type = #reference
-* rest[0].resource[0].searchParam[0].documentation = "The server SHALL support search by Patient logical ID using relative or absolute Patient references under the FHIR reference-search rules, alone and in combination with `_lastUpdated` or `identifier`. See [Finding studies](specification.html#patient-references)."
+* rest[0].resource[0].searchParam[0].documentation = "A Patient reference following [Patient references](patient-identity.html#patient-references), used alone or with `_lastUpdated` or `identifier`."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token

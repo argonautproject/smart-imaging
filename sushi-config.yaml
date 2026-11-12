@@ -20,6 +20,8 @@ pages:
     title: Home
   specification.md:
     title: Specification
+  patient-identity.md:
+    title: Patient Identity and Resource Linkage
   identifiers.md:
     title: Imaging Identifiers
   networks.md:
@@ -32,6 +34,7 @@ pages:
 menu:
   Home: index.html
   Specification: specification.html
+  Identity and Linkage: patient-identity.html
   Identifiers: identifiers.html
   Connecting Organizations: networks.html
   Authorization Patterns: authorization-patterns.html

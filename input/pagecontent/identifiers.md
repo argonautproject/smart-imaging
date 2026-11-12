@@ -1,5 +1,7 @@
 *This page is non-normative.* If you come from the FHIR world and DICOM identifiers are new to you (or vice versa), this page explains the systems involved in hospital imaging, the identifiers each one assigns, and how those identifiers tie clinical records to the imaging system's view of a study.
 
+The normative [Patient Identity and Resource Linkage](patient-identity.html) page defines Patient namespaces, endpoint-specific authorization context, and cross-endpoint linkage rules.
+
 Five identifiers do almost all the work in imaging integrations:
 
 | Identifier | Assigned by | What it names |
@@ -44,8 +46,52 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 * **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
-A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `patient={patient-reference}&identifier=urn:oid:{uid}`, with the Patient reference forms described in [Finding studies](specification.html#patient-references).
+A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `ImagingStudy?patient={patient-reference}&identifier=urn:dicom:uid|urn:oid:{uid}&_include=ImagingStudy:endpoint`, with the [Patient reference forms](patient-identity.html#patient-references) defined in the identity contract. Query parameter values are URL-encoded on the wire.
 
-When the Patient is managed by the Clinical FHIR Server, the Imaging FHIR Server can fetch that Patient and obtain its MRN to map to PACS records. See [Authorization](specification.html#authorization).
+When the Patient is managed by another FHIR endpoint, the Imaging FHIR Server can use an authorized backend Patient lookup or existing registration/MPI data to map that Patient to PACS records.
 
 Representation of imaging reports in FHIR is covered by jurisdiction-specific implementation guides, such as [US Core](https://www.hl7.org/fhir/us/core/). The model above reflects the direction of early consensus.
+
+<a id="cross-endpoint-identifiers"></a>
+
+### Logical IDs and business identifiers
+
+A FHIR resource's `id` identifies it within its resource type and hosting FHIR base. The [cross-endpoint linkage contract](patient-identity.html#cross-endpoint-linkage) defines how resources on different endpoints are correlated.
+
+The DICOM-to-FHIR mappings below use assigning-authority URI agreements. A local issuer string becomes an `Identifier.system` through that agreement; deployments preserve the issuer as well as the identifier value.
+
+| DICOM identifier | FHIR representation | System and value |
+|---|---|---|
+| Patient ID `(0010,0020)`, qualified by Issuer of Patient ID `(0010,0021)` and Issuer of Patient ID Qualifiers Sequence `(0010,0024)` when supplied | `Patient.identifier` | Agreed assigning-authority URI; Patient ID value |
+| Study Instance UID `(0020,000D)` | `ImagingStudy.identifier` | `urn:dicom:uid`; `urn:oid:{StudyInstanceUID}` |
+| Accession Number `(0008,0050)`, qualified by Issuer of Accession Number Sequence `(0008,0051)` | `ServiceRequest.identifier` | Agreed accession-issuer URI; Accession Number value |
+| Series Instance UID `(0020,000E)` | `ImagingStudy.series.uid` | Raw UID, without `urn:oid:` |
+| SOP Instance UID `(0008,0018)` | `ImagingStudy.series.instance.uid` | Raw UID, without `urn:oid:` |
+| Clinician identification, such as Referring Physician Identification Sequence `(0008,0096)` | `Practitioner.identifier` used by a clinical-role reference | Agreed clinician identifier-system URI; identifier value from the identification sequence |
+
+### Patient identifiers
+
+A DICOM Patient ID is a business identifier, often an MRN. It is distinct from `Patient.id`. For example, the DICOM Patient ID `MRN456` issued by the clinical organization's registration system can map to this identifier on `https://clinical.example.org/fhir/Patient/123`:
+
+```json
+{
+  "identifier": [
+    {
+      "system": "https://clinical.example.org/identifiers/mrn",
+      "value": "MRN456"
+    }
+  ]
+}
+```
+
+An independent RIS might carry the same business identifier on its own `Patient/987`. The Patient resources have different logical IDs while sharing an issuer-qualified identifier.
+
+### Studies and orders
+
+`DiagnosticReport.imagingStudy` can identify the study through a FHIR `Reference.identifier` containing the Study Instance UID system and value above. Study Instance UID identifies the DICOM study; DICOM Study ID `(0020,0010)` is a separate attribute, and `ImagingStudy.id` is the FHIR server's logical ID.
+
+An accession identifies an order in its issuer's namespace. The `ServiceRequest` and the study's order linkage can share that identifier.
+
+### Clinician identifiers
+
+Clinician identifiers connect clinical roles, such as `ServiceRequest.requester`, `ImagingStudy.referrer`, and `ImagingStudy.series.performer.actor`, to an appropriate Practitioner or PractitionerRole. The deployment maps DICOM clinician identification to a trusted identifier-system URI and value; an agreed registry identifier can link Practitioner records across endpoints. The SMART `fhirUser` claim identifies the authenticated user's resource at its originating endpoint. DICOM referring or performing clinician data describes the clinical role, not that user's login identity.

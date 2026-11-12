@@ -4,7 +4,7 @@ Instance: patient-example
 InstanceOf: Patient
 Usage: #example
 Title: "Example Patient"
-Description: "A patient with an MRN, as known to the Clinical FHIR Server."
+Description: "A patient with an MRN, hosted at `https://clinical.example.org/fhir/Patient/patient-example` and referenced by the externally anchored imaging examples."
 * identifier.system = "http://hospital.example.org/mrn"
 * identifier.value = "8675309"
 * name.family = "Argonaut"
@@ -280,3 +280,51 @@ Description: "Metadata for a CT study whose associated instances exist, so its s
 * series.number = 1
 * series.modality = $DCM#CT
 * series.numberOfInstances = 3
+
+// ---------- Independent Patient-hosting imaging server ----------
+
+Instance: patient-independent-example
+InstanceOf: Patient
+Usage: #example
+Title: "Patient on an independent imaging server"
+Description: "A Patient hosted at `https://ris.example.org/fhir/Patient/987` in the imaging server's own Patient namespace."
+* id = "987"
+* active = true
+
+Instance: independent-wado-endpoint-contained
+InstanceOf: SmartWadoEndpoint
+Usage: #inline
+* id = "e"
+* status = #active
+* connectionType = $ConnType#dicom-wado-rs
+* payloadType = $PayloadType#any
+* address = "https://ris.example.org/wado-rs"
+
+Instance: imaging-study-independent-patient
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with a local Patient on an independent imaging server"
+Description: """
+A CT study hosted at `https://ris.example.org/fhir`. This server omits
+`patient_reference_base`, so its Patient-reference base is its own FHIR base.
+The subject resolves to its local Patient at `https://ris.example.org/fhir/Patient/987`.
+The deployment binds patient-scoped access to this Patient at authorization time,
+as specified in [Endpoint patient context](patient-identity.html#endpoint-patient-context).
+The contained WADO-RS Endpoint covers the study's one released series and instance.
+"""
+* contained[0] = independent-wado-endpoint-contained
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.5"
+* status = #available
+* subject = Reference(patient-independent-example)
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 1
+* numberOfInstances = 1
+* endpoint[wadoRs].reference = "#e"
+* series.uid = "1.2.840.99999999.20261112.5.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 1
+* series.instance.uid = "1.2.840.99999999.20261112.5.1.1"
+* series.instance.number = 1
+* series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2

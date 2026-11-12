@@ -24,6 +24,7 @@ types are also permitted. Endpoint coverage for released series is specified in
 * subject only Reference(Patient)
 * subject MS
 * subject ^short = "The patient this study belongs to"
+* subject ^definition = "The Patient this study belongs to. The Patient-reference namespace and reference forms follow [Patient-reference base](patient-identity.html#patient-reference-base) and [Patient references](patient-identity.html#patient-references)."
 * modality 1..* MS
 * endpoint 0..* MS
 * endpoint only Reference(Endpoint)
