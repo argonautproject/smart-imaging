@@ -158,10 +158,10 @@ Other trust arrangements (for example, signed tokens the Imaging Server can veri
 **Required token checks.** Before serving any imaging FHIR or WADO-RS request, the Imaging Server SHALL confirm that:
 
 1. the token is **active** (not expired or revoked) and issued by the configured Authorization Server for use at this resource server;
-2. the token's **scopes cover the request** — patient-level imaging scopes for App Launch mode, or system-level imaging scopes for Backend Services mode; and
-3. the request is within the **authorized access**, according to the applicable mode:
-   * **App Launch:** the patient identified by the token's patient context SHALL be the patient whose data is requested — identified by the `patient` reference on a FHIR search, or associated with the requested study on a WADO-RS retrieval. Any additional access restrictions SHALL also be enforced.
-   * **Backend Services:** the Imaging Server SHALL establish the client identity from validated token information and enforce that client's pre-authorized access, narrowed by the granted scopes, for the requested patient and studies.
+2. the token's **scopes cover the request**; and
+3. the request is within the **authorized access**, according to the grant authorizing the request:
+   * **Patient-level (`patient/`) scopes:** the patient identified by the grant's patient context SHALL be the patient whose data is requested — identified by the `patient` reference on a FHIR search, or associated with the requested study on a WADO-RS retrieval. Any additional access restrictions SHALL also be enforced.
+   * **System-level (`system/`) scopes:** the Imaging Server SHALL establish the client identity from validated token information and enforce that client's pre-authorized access, narrowed by the granted scopes, for the requested patient and studies.
 
 Patient-context matching compares patient identity, not raw query-string spelling. The token's patient context is interpreted in its established FHIR context; search references follow the [Patient reference rules below](#patient-references).
 
@@ -222,7 +222,7 @@ If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`,
 
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. This existing search parameter covers both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint`; no separate series-endpoint include is needed. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 
-**Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the patient identified by the `patient` search reference SHALL match the patient identified by the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the Imaging FHIR Server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. The required search support applies in both modes; this guide does not require unfiltered or population-wide search.
+**Access control.** Every search is subject to the checks in [Authorization](#authorization). For searches authorized by `patient/` scopes, any supplied `patient` search reference SHALL identify the patient identified by the grant's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. For searches authorized by `system/` scopes, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the Imaging FHIR Server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. The required search support applies in both modes; this guide does not require unfiltered or population-wide search.
 
 **Study representation and inventory.** The Imaging FHIR Server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**.
 
