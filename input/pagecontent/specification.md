@@ -187,7 +187,7 @@ The App can search `ImagingStudy` by patient on the Imaging FHIR Server to obtai
 
 <a id="patient-references"></a>
 
-The Patient referenced by `ImagingStudy.subject` can be managed by the Imaging FHIR Server or externally. The App can obtain the applicable Patient logical ID and reference namespace through authorization or out of band, such as from a prior exchange or a patient-matching workflow. The Imaging FHIR Server is required to support the `patient` search parameter using Patient references, not business identifiers such as MRNs. This is a server capability requirement, not a requirement for Apps to include `patient` in every search. Patient matching and discovering which organizations hold records remain outside this guide. The search parameter selects data, not permission to access it.
+The Patient referenced by `ImagingStudy.subject` can be managed by the Imaging FHIR Server or externally. The App can obtain the applicable Patient logical ID and reference namespace through authorization or out of band, such as from a prior exchange or a patient-matching workflow.
 
 At `https://imaging.example.org/fhir`, `patient=123` and `patient=Patient/123` identify the local Patient `https://imaging.example.org/fhir/Patient/123`. For an externally managed Patient, the App uses its absolute reference. Relative and absolute references match when they resolve to the same URL; equal trailing logical IDs at different FHIR base URLs do not by themselves identify the same Patient resource.
 
