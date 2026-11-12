@@ -116,7 +116,7 @@ The Backend Client SHALL present the resulting access token as a Bearer token fo
 
 **Authorization Server and participating resource servers.** In this guide, `system/ImagingStudy.rs` permits study search and retrieval of the associated DICOM data only within the Backend Client's pre-authorized access. It does not grant access to all patients or all studies. The Authorization Server and participating resource servers SHALL have an arrangement that allows them to enforce the Backend Client's applicable access restrictions consistently. How those permissions are assigned and communicated is deployment-specific.
 
-**Patient identity.** There is no required `patient` launch context in this mode. Each search uses the applicable Patient reference described in [Patient references](#patient-references). Backend use of `patient/` or `user/` scopes is not defined by this mode.
+**Patient identity.** There is no required `patient` launch context in this mode. When searching by patient, the Backend Client uses the applicable Patient reference described in [Patient references](#patient-references). Backend use of `patient/` or `user/` scopes is not defined by this mode.
 
 **Example (non-normative).** A referral service is registered with the source organization. In this example, `Patient/123` and `Patient/456` are local to the Imaging FHIR Server. Its permissions allow study A for patient `123`, but not study B for the same patient or any studies for patient `456`. It obtains a short-lived token with `system/ImagingStudy.rs` using SMART Backend Services.
 
@@ -179,7 +179,7 @@ Before returning an Endpoint carrying a capability, the Imaging FHIR Server SHAL
 
 ### Finding studies
 
-The App searches `ImagingStudy` by patient on the Imaging FHIR Server to obtain study metadata, the released series and instance inventory, and retrieval Endpoints.
+The App can search `ImagingStudy` by patient on the Imaging FHIR Server to obtain study metadata, the released series and instance inventory, and retrieval Endpoints.
 
 <a id="finding-studies-app"></a>
 
@@ -187,7 +187,7 @@ The App searches `ImagingStudy` by patient on the Imaging FHIR Server to obtain 
 
 <a id="patient-references"></a>
 
-The Patient referenced by `ImagingStudy.subject` can be managed by the Imaging FHIR Server or externally. The App can obtain the applicable Patient logical ID and reference namespace through authorization or out of band, such as from a prior exchange or a patient-matching workflow. The required `patient` search uses Patient references, not business identifiers such as MRNs. Patient matching and discovering which organizations hold records remain outside this guide. The search parameter selects data, not permission to access it.
+The Patient referenced by `ImagingStudy.subject` can be managed by the Imaging FHIR Server or externally. The App can obtain the applicable Patient logical ID and reference namespace through authorization or out of band, such as from a prior exchange or a patient-matching workflow. The Imaging FHIR Server is required to support the `patient` search parameter using Patient references, not business identifiers such as MRNs. This is a server capability requirement, not a requirement for Apps to include `patient` in every search. Patient matching and discovering which organizations hold records remain outside this guide. The search parameter selects data, not permission to access it.
 
 At `https://imaging.example.org/fhir`, `patient=123` and `patient=Patient/123` identify the local Patient `https://imaging.example.org/fhir/Patient/123`. For an externally managed Patient, the App uses its absolute reference. Relative and absolute references match when they resolve to the same URL; equal trailing logical IDs at different FHIR base URLs do not by themselves identify the same Patient resource.
 
@@ -222,7 +222,7 @@ If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`,
 
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. This existing search parameter covers both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint`; no separate series-endpoint include is needed. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 
-**Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the patient identified by the `patient` search reference SHALL match the patient identified by the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the Imaging FHIR Server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
+**Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the patient identified by the `patient` search reference SHALL match the patient identified by the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the Imaging FHIR Server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. The required search support applies in both modes; this guide does not require unfiltered or population-wide search.
 
 **Study representation and inventory.** The Imaging FHIR Server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**.
 
