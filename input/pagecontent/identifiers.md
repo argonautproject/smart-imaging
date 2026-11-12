@@ -37,10 +37,10 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 </div>
 
 * **In DICOM**, the study record itself carries the Accession Number, the Study Instance UID, and patient demographics including MRN; series and instances have their own UIDs.
-* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and `endpoint` references pointing at WADO-RS. An MRN may be used internally to map that patient to imaging records.
+* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
-A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and its Endpoint using `patient={id}&identifier=urn:oid:{uid}`, as described in [Finding studies](specification.html#finding-studies).
+A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `patient={id}&identifier=urn:oid:{uid}`, as described in [Finding studies](specification.html#finding-studies).
 
 To map `Patient/123` to its PACS records, the Imaging FHIR Server can fetch that Patient from the Clinical FHIR Server and obtain its MRN. See the Backend Services example in [Authorization](specification.html#authorization).
 

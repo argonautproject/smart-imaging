@@ -35,7 +35,7 @@ Description: "A CT study whose WADO-RS Endpoint is contained in the resource."
 * modality = $DCM#CT "Computed Tomography"
 * numberOfSeries = 1
 * numberOfInstances = 3
-* endpoint.reference = "#e"
+* endpoint[wadoRs].reference = "#e"
 * series.uid = "1.2.840.99999999.19341866.1571297684.1"
 * series.number = 1
 * series.modality = $DCM#CT
@@ -75,7 +75,7 @@ Description: "An MR study that references a standalone WADO-RS Endpoint resource
 * modality = $DCM#MR "Magnetic Resonance"
 * numberOfSeries = 1
 * numberOfInstances = 1
-* endpoint = Reference(wado-endpoint-example)
+* endpoint[wadoRs] = Reference(wado-endpoint-example)
 * series.uid = "1.2.840.99999999.82943819.1948573621.1"
 * series.number = 1
 * series.modality = $DCM#MR
@@ -107,7 +107,20 @@ Usage: #inline
 * modality = $DCM#CT "Computed Tomography"
 * numberOfSeries = 1
 * numberOfInstances = 3
-* endpoint.reference = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
+* endpoint[wadoRs].reference = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
+* series.uid = "1.2.840.99999999.19341866.1571297684.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 3
+* series.instance[0].uid = "1.2.840.99999999.19341866.1571297684.1.1"
+* series.instance[0].number = 1
+* series.instance[0].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[1].uid = "1.2.840.99999999.19341866.1571297684.1.2"
+* series.instance[1].number = 2
+* series.instance[1].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series.instance[2].uid = "1.2.840.99999999.19341866.1571297684.1.3"
+* series.instance[2].number = 3
+* series.instance[2].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
 
 Instance: imaging-capability-search-response
 InstanceOf: Bundle
@@ -152,3 +165,118 @@ Description: "What an app receives from `GET [imaging-base]/ImagingStudy?patient
 * entry[2].fullUrl = "https://imaging.example.org/fhir/Endpoint/wado-endpoint-example"
 * entry[2].resource = wado-endpoint-example
 * entry[2].search.mode = #include
+
+// ---------- Study with mixed endpoint connection types ----------
+
+Instance: qido-endpoint-example
+InstanceOf: Endpoint
+Usage: #example
+Title: "QIDO-RS Endpoint"
+Description: "A non-WADO-RS Endpoint that can appear alongside SMART WADO-RS Endpoints. This guide's WADO-RS retrieval and token-presentation rules do not define access to this endpoint."
+* status = #active
+* connectionType = $ConnType#dicom-qido-rs
+* payloadType = $PayloadType#any
+* address = "https://pacs.example.org/dicom-query"
+
+Instance: wado-endpoint-secondary-example
+InstanceOf: SmartWadoEndpoint
+Usage: #example
+Title: "Secondary archive WADO-RS Endpoint"
+Description: "A SMART WADO-RS Endpoint for direct access to a series stored in a second archive."
+* status = #active
+* connectionType = $ConnType#dicom-wado-rs
+* payloadType = $PayloadType#any
+* address = "https://archive-two.example.org/dicom-web"
+
+Instance: imaging-study-mixed-endpoints
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with mixed endpoint connection types"
+Description: "A CT study with two released series and their complete instance inventories. The study-level SMART WADO-RS Endpoint covers both series. The first series inherits that WADO-RS coverage despite having a QIDO-RS Endpoint; the second overrides it with a direct WADO-RS Endpoint for series and instance retrieval. The study and second-series lists also demonstrate mixed connection types."
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.1"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 2
+* numberOfInstances = 2
+* endpoint[wadoRs] = Reference(wado-endpoint-example)
+* endpoint[1] = Reference(qido-endpoint-example)
+* series[0].uid = "1.2.840.99999999.20261112.1.1"
+* series[0].number = 1
+* series[0].modality = $DCM#CT
+* series[0].numberOfInstances = 1
+* series[0].endpoint = Reference(qido-endpoint-example)
+* series[0].instance.uid = "1.2.840.99999999.20261112.1.1.1"
+* series[0].instance.number = 1
+* series[0].instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series[1].uid = "1.2.840.99999999.20261112.1.2"
+* series[1].number = 2
+* series[1].modality = $DCM#CT
+* series[1].numberOfInstances = 1
+* series[1].endpoint[wadoRs] = Reference(wado-endpoint-secondary-example)
+* series[1].endpoint[1] = Reference(qido-endpoint-example)
+* series[1].instance.uid = "1.2.840.99999999.20261112.1.2.1"
+* series[1].instance.number = 1
+* series[1].instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+
+// ---------- Study with direct series-level WADO-RS coverage ----------
+
+Instance: imaging-study-series-endpoint
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy with series in separate archives"
+Description: "A CT study with two released series in separate archives, each with a direct SMART WADO-RS Endpoint and its complete instance inventory. No study-level Endpoint is advertised. The App retrieves each series or instance from its designated Endpoint rather than assuming either archive can return the whole study. The source does not supply series or instance numbers for the second series."
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.2"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 2
+* numberOfInstances = 2
+* series[0].uid = "1.2.840.99999999.20261112.2.1"
+* series[0].number = 1
+* series[0].modality = $DCM#CT
+* series[0].numberOfInstances = 1
+* series[0].endpoint[wadoRs] = Reference(wado-endpoint-example)
+* series[0].instance.uid = "1.2.840.99999999.20261112.2.1.1"
+* series[0].instance.number = 1
+* series[0].instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+* series[1].uid = "1.2.840.99999999.20261112.2.2"
+* series[1].modality = $DCM#CT
+* series[1].numberOfInstances = 1
+* series[1].endpoint[wadoRs] = Reference(wado-endpoint-secondary-example)
+* series[1].instance.uid = "1.2.840.99999999.20261112.2.2.1"
+* series[1].instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+
+// ---------- Metadata without WADO-RS retrieval endpoints ----------
+
+Instance: imaging-study-metadata-only
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "Registered ImagingStudy without retrieval endpoints"
+Description: "Metadata for a registered CT study with no associated instances or released series yet. Its metadata is accessible under the authorization, but no retrieval Endpoint is supplied."
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.3"
+* status = #registered
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 0
+* numberOfInstances = 0
+
+Instance: imaging-study-available-not-retrievable
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "Available ImagingStudy without WADO-RS access"
+Description: "Metadata for a CT study whose associated instances exist, so its status is available, but whose series have not been released for WADO-RS retrieval. Its metadata is accessible under the authorization; no study- or series-level retrieval Endpoint is supplied."
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.4"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* modality = $DCM#CT "Computed Tomography"
+* numberOfSeries = 1
+* numberOfInstances = 3
+* series.uid = "1.2.840.99999999.20261112.4.1"
+* series.number = 1
+* series.modality = $DCM#CT
+* series.numberOfInstances = 3

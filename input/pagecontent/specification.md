@@ -67,7 +67,7 @@ The App presents the same SMART access token for clinical FHIR access, `ImagingS
 
 #### App: token handling
 
-The App, including a Backend Client, SHALL treat the access token as a secret and present it only to the Authorization Server, the Clinical FHIR Server covered by the authorization, the Imaging FHIR Server, and WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address`). The token SHALL NOT be forwarded to unrelated organizations or arbitrary referenced endpoints.
+The App, including a Backend Client, SHALL treat the access token as a secret and present it only to the Authorization Server, the Clinical FHIR Server covered by the authorization, the Imaging FHIR Server, and SMART WADO-RS endpoints the Imaging Server has designated (via `Endpoint.address`). The token SHALL NOT be forwarded to unrelated organizations or arbitrary referenced endpoints.
 
 Apps SHALL protect both access tokens and capability URLs from unintended disclosure. A capability URL is usable only with its associated valid SMART token.
 
@@ -177,13 +177,13 @@ Before returning an Endpoint carrying a capability, the Imaging FHIR Server SHAL
 
 ### Finding studies
 
-The App searches `ImagingStudy` by patient on the Imaging FHIR Server to obtain study metadata and the WADO-RS Endpoints for authorized retrieval.
+The App searches `ImagingStudy` by patient on the Imaging FHIR Server to obtain study metadata, the released series and instance inventory, and retrieval Endpoints.
 
 <a id="finding-studies-app"></a>
 
 #### App: study search
 
-The App asks the Imaging FHIR Server to include each study's WADO-RS Endpoint:
+The App asks the Imaging FHIR Server to include referenced Endpoints:
 
 ```
 GET https://imaging.example.org/fhir/ImagingStudy?patient=123&_include=ImagingStudy:endpoint
@@ -192,7 +192,11 @@ Authorization: Bearer access-token-value-unguessable
 
 An Endpoint may be a response-local Bundle entry, a separately addressable resource included in the Bundle, or a contained resource within an `ImagingStudy`. Apps SHALL support all three forms and resolve references using the [FHIR Bundle reference-resolution rules](https://hl7.org/fhir/R4/bundle.html#references).
 
-For a response-local Endpoint with a `urn:uuid:...` fullUrl, the UUID identifies the Endpoint within the Bundle; it is not the retrieval address. The App resolves the reference to the included Endpoint and uses its HTTPS `address` as the WADO-RS base URL. Response-specific capability Endpoints represent authorization for the requesting token, not reusable Endpoint records for other authorization contexts.
+For this guide's retrieval flow, the App selects SMART WADO-RS Endpoints identified by `Endpoint.connectionType` system `http://terminology.hl7.org/CodeSystem/endpoint-connection-type` and code `dicom-wado-rs`. Other endpoint types, such as viewer or QIDO-RS endpoints, are not WADO-RS retrieval targets; being referenced does not authorize them to receive the App's SMART token.
+
+For a response-local Endpoint with a `urn:uuid:...` fullUrl, the UUID identifies the Endpoint within the Bundle; it is not the retrieval address. The App resolves the selected WADO-RS Endpoint's reference and uses its HTTPS `address` as the WADO-RS base URL. Response-specific capability Endpoints represent authorization for the requesting token, not reusable Endpoint records for other authorization contexts.
+
+The released series and instance UIDs and SOP Classes let the App select objects and check retrieval completeness without first downloading a whole study. See [Retrieving images](#retrieving-images) for choosing a study- or series-level WADO-RS Endpoint and constructing request paths.
 
 If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`, the App SHOULD wait the indicated number of seconds and repeat the identical request.
 
@@ -208,15 +212,36 @@ If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`,
 | `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Incremental sync: only studies updated since the app last checked |
 | `patient=123&identifier=urn:oid:1.2.3` | Look up one study by DICOM Study Instance UID |
 
-The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
+The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. This existing search parameter covers both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint`; no separate series-endpoint include is needed. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
 
 **Access control.** Every search is subject to the checks in [Authorization](#authorization). In App Launch mode, the `patient` search parameter SHALL match the token's patient context; a mismatch receives `403 Forbidden`, not an empty Bundle. In Backend Services mode, a request for a patient outside the client's authorized access SHALL receive `403 Forbidden`. Within an authorized patient, the Imaging FHIR Server SHALL omit studies and included Endpoints the client is not permitted to access. A successful search may therefore return only some studies, or none. These rules also apply when a search includes `identifier` or `_lastUpdated`. Both modes use the patient-specific search combinations above; this guide does not require unfiltered or population-wide search.
 
-**Study representation.** The Imaging FHIR Server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**, and at least one **endpoint** conforming to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html) — the WADO-RS base URL where the App retrieves DICOM data using its SMART token. Studies should also carry descriptive detail when available — start time, series and instance counts, per-series metadata — so Apps can show a useful study list before downloading anything.
+**Study representation and inventory.** The Imaging FHIR Server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**.
 
-**Response-specific Endpoints.** For capability URLs, the Imaging FHIR Server SHOULD return the Endpoint as a response-local Bundle entry with a `urn:uuid:...` value in `Bundle.entry.fullUrl` and the same value in `ImagingStudy.endpoint.reference`. The Imaging FHIR Server SHALL include that Endpoint entry on the same Bundle page as each study referencing it, including when the request omits `_include`.
+The Imaging FHIR Server SHALL populate every released series and instance, including `series.uid`, `series.instance.uid`, and `series.instance.sopClass`. Released content is content made available for DICOM retrieval under the current authorization; metadata alone does not establish release. The Imaging FHIR Server SHALL populate `series.number` and `series.instance.number` when their values are present in the source. These number elements remain `0..1` with Must Support; they can be absent when the source does not supply them.
 
-Worked examples: [study with a contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html), [study with an external Endpoint](ImagingStudy-imaging-study-external-endpoint.html), [search response with a response-local capability Endpoint](Bundle-imaging-capability-search-response.html), and a [complete search response Bundle](Bundle-imaging-search-response.html).
+Additional descriptive details, such as start time, series and instance counts, and further per-series metadata, help Apps present a useful study list and should be included when available. The released UID hierarchy is compatible with [IHE MADO](https://profiles.ihe.net/RAD/MADO/). MADO's optional [`MadoKeyObjectDocumentTitle` extension](https://profiles.ihe.net/RAD/MADO/StructureDefinition-MadoKeyObjectDocumentTitle.html) conveys the title of a Key Object Selection document, allowing Apps to distinguish KOS purposes.
+
+**Endpoint coverage.** Both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint` use open slicing: the lists and their WADO-RS slices are `0..*` with Must Support. WADO-RS Endpoints conform to [SMART WADO-RS Endpoint](StructureDefinition-smart-wado-endpoint.html); other connection types are also permitted.
+
+The Imaging FHIR Server SHALL provide a SMART WADO-RS Endpoint for every released series, directly at series level or inherited from study level. A study-level WADO-RS Endpoint covers all released series and instances. For series and instance requests, a series-level WADO-RS Endpoint overrides the study-level WADO-RS Endpoint for that series. Other series endpoint connection types do not override inherited WADO-RS coverage. Separate series-level Endpoints can provide coverage without any study-level WADO-RS Endpoint.
+
+FHIR `status = available` means that instances have been associated with the study, not that they are accessible through WADO-RS. Subject to the access rules above, the Imaging FHIR Server can return known study metadata without retrieval Endpoints, including for registered or cancelled studies and for studies with `status = available` whose content is not retrievable.
+
+**Response-specific Endpoints.** For capability URLs, the Imaging FHIR Server SHOULD return the Endpoint as a response-local Bundle entry with a `urn:uuid:...` value in `Bundle.entry.fullUrl` and the same value in the corresponding `ImagingStudy.endpoint.reference` or `ImagingStudy.series.endpoint.reference`. The Imaging FHIR Server SHALL include that Endpoint entry on the same Bundle page as each study referencing it at either level, including when the request omits `_include`.
+
+Worked examples:
+
+| Example | What it demonstrates |
+|---|---|
+| [Contained Endpoint](ImagingStudy-imaging-study-contained-endpoint.html) | Study-level WADO-RS coverage and a complete instance inventory |
+| [External Endpoint](ImagingStudy-imaging-study-external-endpoint.html) | A separately addressable WADO-RS Endpoint |
+| [Response-local capability Endpoint](Bundle-imaging-capability-search-response.html) | A token-bound retrieval URL resolved within the search Bundle |
+| [Mixed endpoint types and a series override](ImagingStudy-imaging-study-mixed-endpoints.html) | WADO-RS inheritance, a direct series override, and non-WADO-RS Endpoints |
+| [Series in separate archives](ImagingStudy-imaging-study-series-endpoint.html) | Two direct series Endpoints and no study-wide endpoint |
+| [Registered study metadata](ImagingStudy-imaging-study-metadata-only.html) | No associated instances or retrieval Endpoints |
+| [Available but unretrievable study](ImagingStudy-imaging-study-available-not-retrievable.html) | Known instances without WADO-RS access |
+| [Search response Bundle](Bundle-imaging-search-response.html) | Study matches with included Endpoints |
 
 **Delayed search results: 503 and Retry-After.** Some Imaging FHIR Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request. Rather than holding the connection open, the Imaging FHIR Server MAY respond:
 
@@ -231,16 +256,34 @@ Once results are ready, the Imaging FHIR Server responds normally with the Bundl
 
 ### Retrieving images
 
-Each study's Endpoint supplies a WADO-RS base URL in `Endpoint.address`. The App uses that address and its SMART token to retrieve the study's DICOM data from the DICOMweb Server.
+Each SMART WADO-RS Endpoint supplies a base URL in `Endpoint.address`. The App uses the released UID inventory and the applicable endpoint to retrieve a study, a series, or an individual instance with its SMART token.
 
 <a id="retrieving-images-app"></a>
 
 #### App: image retrieval
 
-**Constructing requests.** The App removes the `urn:oid:` prefix from the study's `urn:dicom:uid` identifier value and appends `/studies/{Study Instance UID}` to the base URL. The App SHALL send the same SMART access token used for the authorized FHIR request in the `Authorization` header:
+**Selecting an endpoint.** For a full-study request, the App uses an advertised study-level WADO-RS Endpoint. For series or instance retrieval, it uses the series-level WADO-RS Endpoint when present, otherwise the study-level WADO-RS Endpoint. A series-level override does not change which endpoint serves full-study requests.
+
+**Constructing requests.** The App removes the `urn:oid:` prefix from the study's `urn:dicom:uid` identifier value. Series and SOP Instance UIDs come directly from `series.uid` and `series.instance.uid`. The App appends the appropriate path to the selected `Endpoint.address`:
+
+| Retrieval | Path appended to the WADO-RS base URL |
+|---|---|
+| Study | `/studies/{Study Instance UID}` |
+| Series | `/studies/{Study Instance UID}/series/{Series Instance UID}` |
+| Instance | `/studies/{Study Instance UID}/series/{Series Instance UID}/instances/{SOP Instance UID}` |
+
+The App SHALL send the same SMART access token used for the authorized FHIR request in the `Authorization` header. For example, a full-study request through a study-level WADO-RS Endpoint is:
 
 ```
 GET https://imaging.example.org/wado-rs/studies/1.2.840.99999999.19341866.1571297684
+Accept: multipart/related; type=application/dicom; transfer-syntax=*
+Authorization: Bearer access-token-value-unguessable
+```
+
+For the [study with series in separate archives](ImagingStudy-imaging-study-series-endpoint.html), the App can retrieve an instance from the second archive using:
+
+```
+GET https://archive-two.example.org/dicom-web/studies/1.2.840.99999999.20261112.2/series/1.2.840.99999999.20261112.2.2/instances/1.2.840.99999999.20261112.2.2.1
 Accept: multipart/related; type=application/dicom; transfer-syntax=*
 Authorization: Bearer access-token-value-unguessable
 ```
@@ -259,11 +302,11 @@ The capability value above is illustrative. Apps SHALL treat returned addresses 
 <p><strong>Design question (non-normative):</strong> Should this guide also support bearer capability URLs, where clients are explicitly instructed not to send their SMART access token?</p>
 </div>
 
-**Additional retrieval operations.** Apps SHOULD degrade gracefully: try the richer request, fall back to full-study retrieval if the DICOMweb Server doesn't offer it.
+**Optional operations.** Apps SHOULD degrade gracefully when optional operations are unavailable, using series- or instance-level retrieval, or full-study retrieval where a study-level WADO-RS Endpoint is advertised.
 
-**Refreshing a retrieval endpoint.** If DICOM retrieval returns `401 Unauthorized` or `403 Forbidden`, the App can repeat the `ImagingStudy` search for the patient and Study Instance UID, using a valid SMART token and refreshing it first if necessary. The Imaging FHIR Server evaluates the current authorization before returning the study and its Endpoint.
+**Refreshing a retrieval endpoint.** If DICOM retrieval returns `401 Unauthorized` or `403 Forbidden`, the App can repeat the `ImagingStudy` search for the patient and Study Instance UID, using a valid SMART token and refreshing it first if necessary. The Imaging FHIR Server evaluates the current authorization before returning the study and its Endpoints.
 
-If the search returns the study, the App can retry retrieval using the returned Endpoint and the SMART token used for that search. If the study is not returned, or retrieval is again rejected for authorization, the App stops this recovery attempt.
+If the search returns the study with a WADO-RS Endpoint covering the requested retrieval, the App can retry using that Endpoint and the SMART token used for that search. If the study or the applicable WADO-RS Endpoint is not returned, or retrieval is again rejected for authorization, the App stops this recovery attempt.
 
 <a id="capability-protection"></a>
 
@@ -279,7 +322,11 @@ A capability requires its associated SMART token to remain valid and is also sub
 
 #### DICOMweb Server: image retrieval
 
-**Full-study retrieval.** The DICOMweb Server SHALL support full-study retrieval with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the DICOMweb Server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. The response is the study's DICOM instances as a multipart body:
+**Required retrieval operations.** The DICOMweb Server SHALL support series- and instance-level retrieval at every SMART WADO-RS Endpoint for the content it serves, per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html).
+
+At a SMART WADO-RS Endpoint advertised at study level, the DICOMweb Server SHALL also support full-study retrieval covering all released series and instances, with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the DICOMweb Server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. Operation support does not override the token, access, or capability restrictions below.
+
+The response returns the requested DICOM instances as a multipart body:
 
 ```
 HTTP/1.1 200 OK
@@ -288,16 +335,14 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 [DICOM instances, one part each]
 ```
 
-**Additional retrieval operations.** Further WADO-RS capabilities enable richer App behavior (progressive loading, thumbnails, viewing without a full download). DICOMweb Servers SHOULD support, per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html):
+**Additional retrieval operations.** Further WADO-RS capabilities enable richer App behavior (progressive loading, thumbnails, viewing without a full download). DICOMweb Servers SHOULD support:
 
-* **Series-level** retrieval — `GET /studies/{uid}/series/{uid}`
-* **Instance-level** retrieval — `GET /studies/{uid}/series/{uid}/instances/{uid}`
 * **Frame-level** retrieval — `.../instances/{uid}/frames/{n}`
 * **Rendered** images — `.../rendered` at study, series, or instance level
 * **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
 * **Transfer-syntax negotiation** — re-encoding payloads to match the `Accept` header
 
-**Retrieval authorization.** The DICOMweb Server SHALL perform the token and access checks in [Authorization](#authorization) on every request. If the URL carries a capability, the DICOMweb Server SHALL additionally validate that capability and its binding to the presented token, and enforce its permitted data and operations. All applicable restrictions SHALL be enforced. These checks apply to every supported retrieval, including metadata, rendered images, instances, and frames, whether or not the App previously searched for the study.
+**Retrieval authorization.** The DICOMweb Server SHALL perform the token and access checks in [Authorization](#authorization) on every request. If the URL carries a capability, the DICOMweb Server SHALL additionally validate that capability and its binding to the presented token, and enforce its permitted data and operations. All applicable restrictions SHALL be enforced. These checks apply to every supported retrieval, including full studies, series, instances, frames, metadata, and rendered images, whether or not the App previously searched for the study.
 
 The DICOMweb Server SHALL deny requests outside the authorized access without returning DICOM data. A full-study request SHALL NOT return a successful partial study when access restrictions exclude some of its contents; the DICOMweb Server SHALL deny that request.
 

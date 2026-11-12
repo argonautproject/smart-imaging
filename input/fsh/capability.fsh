@@ -31,11 +31,14 @@ enforcing capability lifetime and revocation are specified in
 The server SHALL support searching ImagingStudy by patient, alone and in
 combination with `_lastUpdated` and `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
-so apps receive the WADO-RS Endpoint for each study. Apps SHALL resolve Endpoints
-provided as response-local Bundle entries, separately addressable resources
-included in the Bundle, or contained resources. Response-specific capability
-Endpoints SHOULD use urn:uuid fullUrl values; the server SHALL include them on
-the same Bundle page as each referencing study, even without an _include request.
+for referenced study- and series-level Endpoints in the search Bundle. Apps SHALL
+resolve Endpoints provided as response-local Bundle entries, separately addressable
+resources included in the Bundle, or contained resources. Response-specific
+capability Endpoints SHOULD use urn:uuid fullUrl values; the server SHALL include
+them on the same Bundle page as each referencing study, even without an _include request.
+
+Study representation, released inventory, endpoint coverage, and status interpretation
+are specified in [Finding studies](specification.html#finding-studies).
 
 Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
 patient-context mismatches and backend requests for unauthorized patients receive

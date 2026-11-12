@@ -17,8 +17,8 @@ The guide supports both [SMART App Launch](specification.html#app-launch), for u
 1. **Discover** — The app finds the imaging endpoint, either from the clinical FHIR endpoint's `.well-known/smart-configuration` or out-of-band configuration. ([Discovery](specification.html#discovery))
 2. **Authorize** — The app completes SMART App Launch and receives an access token with patient context. Where Backend Services is supported, a pre-authorized client instead obtains a system-scoped token through SMART Backend Services. ([Authorization](specification.html#authorization))
 3. **Query clinical data** *(optional)* — The app uses the token against the Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
-4. **Find studies** — The app searches the imaging endpoint for the patient's `ImagingStudy` resources, each of which links to a WADO-RS endpoint. ([Finding studies](specification.html#finding-studies))
-5. **Fetch images** — The app retrieves DICOM data from the returned WADO-RS endpoint, presenting the same SMART access token. ([Retrieving images](specification.html#retrieving-images))
+4. **Find studies** — The app searches the imaging endpoint for study metadata, the released series and instance inventory, and retrieval Endpoints. ([Finding studies](specification.html#finding-studies))
+5. **Fetch images** — The app retrieves selected series or instances, or a whole study where a study-level WADO-RS Endpoint is advertised, presenting the same SMART access token. ([Retrieving images](specification.html#retrieving-images))
 
 ### Actors
 
@@ -29,7 +29,7 @@ This guide uses the following actor names throughout:
 * **Authorization Server** — the SMART authorization server configured for the deployment. It supports client registration, token issuance, and token validation for participating resource servers. Depending on the supported modes, it provides App Launch authorization and refresh, Backend Services token issuance for pre-authorized clients, or both. It may be provided by an EHR or another service.
 * **Clinical FHIR Server** — a FHIR service exposing clinical resources such as `Patient`, `DiagnosticReport`, and `ServiceRequest`. Its SMART configuration can advertise imaging endpoints. An app may query it for clinical data as part of an imaging workflow.
 * **Imaging Server** — the collective term for two cooperating functions:
-    * **Imaging FHIR Server** — serves `ImagingStudy` resources and returns the WADO-RS Endpoints through which authorized clients can retrieve images.
+    * **Imaging FHIR Server** — serves `ImagingStudy` metadata and the complete released series and instance inventory, with study- or series-level WADO-RS Endpoints for retrieval.
     * **DICOMweb Server** — provides WADO-RS retrieval through those endpoints and enforces the applicable retrieval authorization.
 
 These are functional roles, not product categories. One product may implement several roles, or cooperating products may implement them separately. For example, an EHR, imaging platform, or adapter could provide Imaging FHIR; a PACS, archive service, or gateway could provide DICOMweb; and an EHR or a standalone authorization service could provide the Authorization Server. “DICOMweb Server” here refers to the WADO-RS retrieval functionality described in this guide.
