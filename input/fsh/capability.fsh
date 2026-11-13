@@ -23,7 +23,8 @@ token validation, access enforcement, and capability issuance are specified in
 Patient-reference base is specified in [Patient-reference base](patient-identity.html#patient-reference-base);
 grant binding and per-endpoint patient context are specified in
 [Endpoint patient context](patient-identity.html#endpoint-patient-context).
-Mode-specific discovery requirements are specified in [Discovery](specification.html#discovery).
+Discovery of supported grants through `grant_types_supported` and token-endpoint
+authentication metadata is specified in [Discovery](specification.html#discovery).
 Requirements for presenting the same token on retrieval, validating capabilities and their token binding, and
 enforcing capability lifetime and revocation are specified in
 [Retrieving images](specification.html#retrieving-images).

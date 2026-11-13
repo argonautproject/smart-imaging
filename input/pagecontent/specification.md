@@ -22,7 +22,7 @@ The App learns the imaging endpoint and the authorization modes it supports. Dis
 
 In-band discovery requires no per-site setup for the App; Apps SHOULD prefer it when available and MAY fall back to out-of-band configuration.
 
-The `smart-imaging-access` capability identifies the imaging interface; it does not imply either authorization mode. Support for a grant type alone does not establish support for that mode at an imaging endpoint. Apps using in-band discovery SHALL check the corresponding imaging-specific capability; out-of-band configuration MAY establish the same support explicitly. Advertising support does not grant access to any particular App.
+The `smart-imaging-access` capability identifies the imaging interface. Apps using in-band discovery SHALL check `grant_types_supported` for the grant their authorization flow uses: `authorization_code` for App Launch or `client_credentials` for Backend Services. Out-of-band configuration MAY establish flow support. Access remains subject to the checks in [Authorization](#authorization).
 
 The App determines the endpoint's Patient namespace from its [Patient-reference metadata](patient-identity.html#patient-reference-base).
 
@@ -35,11 +35,11 @@ A Clinical FHIR Server supporting in-band discovery SHALL advertise imaging supp
 * in the top-level `capabilities` array, if that FHIR endpoint also serves `ImagingStudy` as described here, or
 * in `associated_endpoints[].capabilities`, if a separate FHIR endpoint does.
 
-**App Launch support.** A deployment supporting App Launch SHALL advertise `http://fhir.org/argonaut/smart-imaging/capabilities/app-launch` alongside `smart-imaging-access` for each imaging endpoint supporting that mode. The SMART configuration SHALL advertise `authorization_code` in `grant_types_supported` and meet SMART App Launch discovery requirements.
+**App Launch support.** For deployments supporting App Launch, the SMART configuration SHALL include `authorization_code` in `grant_types_supported` and meet SMART App Launch discovery requirements.
 
-**Backend Services support.** A deployment supporting the [Backend Services mode](#backend-services) SHALL additionally advertise `http://fhir.org/argonaut/smart-imaging/capabilities/backend-services` alongside `smart-imaging-access` for each imaging endpoint supporting that mode. This URI is a capability identifier, not an API endpoint. In the Clinical FHIR Server's `.well-known/smart-configuration`, the capability goes in the top-level or associated endpoint's `capabilities` array as above; `grant_types_supported` and token authentication metadata remain at the top level, describing the advertised Authorization Server. That document SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
+**Backend Services support.** For deployments supporting [Backend Services](#backend-services), the SMART configuration SHALL include `client_credentials` in `grant_types_supported` and meet SMART's [asymmetric client authentication discovery requirements](https://hl7.org/fhir/smart-app-launch/STU2.2/client-confidential-asymmetric.html#discovery-requirements). It SHOULD list `system/ImagingStudy.rs` in `scopes_supported`.
 
-Deployments supporting both modes SHALL advertise both mode-specific capabilities.
+Grant types, token-endpoint authentication metadata, and `scopes_supported` appear at the top level and describe the advertised Authorization Server.
 
 Patient-namespace metadata and its publication requirements are defined in [Patient Identity and Resource Linkage](patient-identity.html#patient-reference-base).
 
@@ -55,16 +55,13 @@ Patient-namespace metadata and its publication requirements are defined in [Pati
     {
       "url": "https://imaging.example.org/fhir",
       "patient_reference_base": "https://clinical.example.org/fhir",
-      "capabilities": [
-        "smart-imaging-access",
-        "http://fhir.org/argonaut/smart-imaging/capabilities/app-launch"
-      ]
+      "capabilities": ["smart-imaging-access"]
     }
   ]
 }
 ```
 
-The App reads this document, sees `smart-imaging-access` and the App Launch capability on the associated endpoint, and knows it can search `https://imaging.example.org/fhir/ImagingStudy` using an access token from the advertised Authorization Server.
+The App discovers the imaging endpoint and `authorization_code` support, then requests authorization from the advertised Authorization Server.
 
 ### Authorization
 

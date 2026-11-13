@@ -68,22 +68,17 @@ The following JSON excerpts omit unrelated SMART discovery fields. The local def
 
 ```json
 {
+  "grant_types_supported": ["authorization_code"],
   "capabilities": ["launch-standalone"],
   "associated_endpoints": [
     {
       "url": "https://imaging.example.org/fhir",
-      "capabilities": [
-        "smart-imaging-access",
-        "http://fhir.org/argonaut/smart-imaging/capabilities/app-launch"
-      ],
+      "capabilities": ["smart-imaging-access"],
       "patient_reference_base": "https://clinical.example.org/fhir"
     },
     {
       "url": "https://ris.example.org/fhir",
-      "capabilities": [
-        "smart-imaging-access",
-        "http://fhir.org/argonaut/smart-imaging/capabilities/app-launch"
-      ]
+      "capabilities": ["smart-imaging-access"]
     }
   ]
 }
@@ -93,10 +88,8 @@ The facade's own document at `https://imaging.example.org/fhir/.well-known/smart
 
 ```json
 {
-  "capabilities": [
-    "smart-imaging-access",
-    "http://fhir.org/argonaut/smart-imaging/capabilities/app-launch"
-  ],
+  "grant_types_supported": ["authorization_code"],
+  "capabilities": ["smart-imaging-access"],
   "patient_reference_base": "https://clinical.example.org/fhir",
   "associated_endpoints": [
     {
