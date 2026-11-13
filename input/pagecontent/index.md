@@ -1,4 +1,4 @@
-**SMART Imaging Access lets an app retrieve clinical records, imaging-study metadata, and DICOM images using the same SMART access token.**
+**SMART Imaging Access lets a client retrieve clinical records, imaging-study metadata, and DICOM images through one SMART authorization.**
 
 This helps patients gather their own records, supports second opinions, streamlines research data donation, and lets clinicians pull studies into their preferred viewers. It also supports [cross-organization exchange](networks.html) of diagnostic-quality images.
 
@@ -11,25 +11,26 @@ The [Specification](specification.html) and [Patient Identity and Resource Linka
 <source media="(max-width: 640px)" srcset="system-map-mobile.svg"/>
 <img src="system-map.svg" alt="System map: an app authorizes with the Authorization Server, optionally queries the Clinical FHIR Server, and uses the Imaging Server for study metadata and DICOM data; the Imaging Server validates tokens through the Authorization Server's introspection endpoint" style="max-width: 100%; height: auto;"/>
 </picture>
-<p><em>The diagram illustrates App Launch. Both authorization modes use the same token for study search and image retrieval. These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
+<p><em>The diagram illustrates App Launch using the single-token baseline within participating services. These roles may be implemented by one product or multiple cooperating products. The dashed connection shows token validation using SMART Token Introspection.</em></p>
 </div>
 
 ### How it works
 
-1. **Discover** — The app finds the imaging endpoint, either from the clinical FHIR endpoint's `.well-known/smart-configuration` or out-of-band configuration. ([Discovery](specification.html#discovery))
-2. **Authorize** — The app obtains a SMART access token with the applicable scopes and endpoint-specific context. User-facing apps use SMART App Launch; pre-authorized Backend Clients use SMART Backend Services. ([Authorization](specification.html#authorization))
-3. **Query clinical data** *(optional)* — The app uses the token against the Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
-4. **Find studies** — The app searches the imaging endpoint for study metadata, the released series and instance inventory, and retrieval Endpoints. ([Finding studies](specification.html#finding-studies))
-5. **Fetch images** — The app retrieves selected series or instances, or a whole study where a study-level WADO-RS Endpoint is advertised, presenting the same SMART access token. ([Retrieving images](specification.html#retrieving-images))
+1. **Discover** — The client finds the imaging endpoint, either from the clinical FHIR endpoint's `.well-known/smart-configuration` or out-of-band configuration. ([Discovery](specification.html#discovery))
+2. **Authorize** — The client obtains a SMART access token with the applicable scopes and endpoint-specific context. Apps use SMART App Launch; pre-authorized Backend Clients use SMART Backend Services. ([Authorization](specification.html#authorization))
+3. **Query clinical data** *(optional)* — The client uses the token against the authorized Clinical FHIR Server — for example, to fetch the Patient resource or imaging DiagnosticReports.
+4. **Find studies** — The client searches the imaging endpoint for study metadata, the released series and instance inventory, and retrieval Endpoints. ([Finding studies](specification.html#finding-studies))
+5. **Fetch images** — The client retrieves selected series or instances, or a whole study where a study-level WADO-RS Endpoint is advertised, presenting a currently valid token authorizing the retrieval. ([Retrieving images](specification.html#retrieving-images))
 
 ### Actors
 
 This guide uses the following actor names throughout:
 
-* **App** — a client accessing clinical and imaging data. A user-facing application (patient- or provider-facing) can connect through SMART App Launch; a pre-authorized service can connect through SMART Backend Services. Unless stated otherwise, the guide's discovery, search, retrieval, and token-handling requirements apply to Backend Clients too.
-* **Backend Client** — an App using SMART Backend Services, with access authorized in advance rather than through a user-facing launch. Backend Clients can act within the source organization or on behalf of an external organization.
+* **Client** — software accessing authorized clinical and imaging data. The guide's shared discovery, search, retrieval, and token-handling requirements apply to both Apps and Backend Clients.
+* **App** — a user-facing client (patient- or provider-facing) using SMART App Launch.
+* **Backend Client** — a client using SMART Backend Services, with access authorized in advance rather than through a user-facing launch. Backend Clients can act within the source organization or on behalf of an external organization.
 * **Authorization Server** — the SMART authorization server configured for the deployment. It supports client registration, token issuance, and token validation for participating resource servers. Depending on the supported modes, it provides App Launch authorization and refresh, Backend Services token issuance for pre-authorized clients, or both. It may be provided by an EHR or another service.
-* **Clinical FHIR Server** — a FHIR service exposing clinical resources such as `Patient`, `DiagnosticReport`, and `ServiceRequest`. Its SMART configuration can advertise imaging endpoints. An app may query it for clinical data as part of an imaging workflow.
+* **Clinical FHIR Server** — a FHIR service exposing clinical resources such as `Patient`, `DiagnosticReport`, and `ServiceRequest`. Its SMART configuration can advertise imaging endpoints. A client may query it for clinical data as part of an imaging workflow.
 * **Imaging Server** — the collective term for two cooperating functions:
     * **Imaging FHIR Server** — serves `ImagingStudy` metadata and the complete released series and instance inventory, with study- or series-level WADO-RS Endpoints for retrieval.
     * **DICOMweb Server** — provides WADO-RS retrieval through those endpoints and enforces the applicable retrieval authorization.
@@ -48,7 +49,7 @@ In scope:
 
 * Discovering an imaging endpoint through SMART configuration or direct configuration
 * Reusing the SMART access token issued by the Authorization Server for imaging requests, with server-side validation (for example, via [SMART Token Introspection](https://hl7.org/fhir/smart-app-launch/token-introspection.html))
-* Using token-bound capability URLs to carry study-specific permissions between cooperating services
+* Enforcing consistent access permissions across cooperating clinical FHIR, imaging FHIR, and WADO-RS services
 * Searching `ImagingStudy` by patient and retrieving DICOM data via WADO-RS
 * Discovering each endpoint's Patient namespace and linking authorized resources across FHIR endpoints
 * Backend Services access, with system scopes and enforcement of each client's pre-authorized permissions

@@ -4,7 +4,7 @@
 
 Sharing images between organizations for treatment, referrals, and second opinions is an important use case. SMART Imaging Access provides a building block for that work: a consistent way to access a health system's clinical and imaging data with a common approach to authorization.
 
-Within a health system, clinical records and images often live in separate products. This guide describes how those products cooperate so an app can retrieve clinical records, study metadata, and images using the same SMART token. The services can be operated by the health system or by vendors working on its behalf.
+Within a health system, clinical records and images often live in separate products. This guide describes how those products cooperate so a client can retrieve clinical records, study metadata, and images through one SMART authorization, using a currently valid token at participating services. The services can be operated by the health system or by vendors working on its behalf.
 
 ### Connecting organizations
 

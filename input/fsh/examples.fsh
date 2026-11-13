@@ -84,21 +84,21 @@ Description: "An MR study that references a standalone WADO-RS Endpoint resource
 * series.instance.number = 1
 * series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.4
 
-// ---------- Search response with a response-local capability Endpoint ----------
+// ---------- Search response with a response-local study-context Endpoint ----------
 
-Instance: capability-endpoint-inline
+Instance: study-context-endpoint-inline
 InstanceOf: SmartWadoEndpoint
 Usage: #inline
 * id = "7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
 * status = #active
 * connectionType = $ConnType#dicom-wado-rs
 * payloadType = $PayloadType#any
-* address = "https://imaging.example.org/wado-capability/opaque-example-capability"
+* address = "https://imaging.example.org/wado-ctx/illustrative-signed-context"
 
-Instance: capability-study-inline
+Instance: study-context-study-inline
 InstanceOf: SmartImagingStudy
 Usage: #inline
-* id = "imaging-study-capability"
+* id = "imaging-study-context"
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.19341866.1571297684"
 * status = #available
@@ -122,27 +122,38 @@ Usage: #inline
 * series.instance[2].number = 3
 * series.instance[2].sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
 
-Instance: imaging-capability-search-response
+Instance: imaging-study-context-search-response
 InstanceOf: Bundle
 Usage: #example
-Title: "ImagingStudy search with a response-local capability Endpoint"
+Title: "ImagingStudy search with a response-local study-context Endpoint"
 Description: """
-An authorized search response containing a CT study and an Endpoint specific
-to the requesting SMART token. The ImagingStudy references the Endpoint's
-urn:uuid fullUrl. The client resolves that reference within this Bundle, appends
-the study path to Endpoint.address, and presents the same SMART access token
-when retrieving DICOM data. The retrieval service validates the token, the
-capability, and their binding. The URL and UUID are illustrative values.
+An authorized search response containing a CT study and a response-local Endpoint.
+The ImagingStudy references the Endpoint's urn:uuid fullUrl, and the Endpoint is
+included on the same Bundle page even if the search omits `_include`.
+The client resolves that reference within this Bundle and appends the study path
+to the opaque Endpoint.address while preserving its path prefix.
+
+The address illustrates optional signed study context, not a bearer permission.
+This non-normative example defines neither a signing format nor a cryptographic
+implementation; the URL and UUID are illustrative values. The retrieval service
+validates the context alongside the current token and current access policy.
+It accepts any currently valid token from the configured Authorization Server
+that authorizes the requested access, including refreshed or newly issued tokens;
+the token need not be the one used for the search. See
+[Cooperating servers](specification.html#cooperating-servers),
+[Imaging permissions](specification.html#imaging-permissions),
+[Imaging Server authorization](specification.html#imaging-server-authorization),
+and [Retrieving images](specification.html#retrieving-images).
 """
 * type = #searchset
 * total = 1
 * link[0].relation = "self"
 * link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2Fpatient-example&_include=ImagingStudy:endpoint"
-* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-capability"
-* entry[0].resource = capability-study-inline
+* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-context"
+* entry[0].resource = study-context-study-inline
 * entry[0].search.mode = #match
 * entry[1].fullUrl = "urn:uuid:7d30f876-3d28-4c21-9f9d-13bfa9dd42a0"
-* entry[1].resource = capability-endpoint-inline
+* entry[1].resource = study-context-endpoint-inline
 * entry[1].search.mode = #include
 
 // ---------- Search response Bundle ----------
@@ -151,7 +162,7 @@ Instance: imaging-search-response
 InstanceOf: Bundle
 Usage: #example
 Title: "ImagingStudy search response"
-Description: "What an app receives from `GET [imaging-base]/ImagingStudy?patient=...&_include=ImagingStudy:endpoint`."
+Description: "What a client receives from `GET [imaging-base]/ImagingStudy?patient=...&_include=ImagingStudy:endpoint`."
 * type = #searchset
 * total = 2
 * link[0].relation = "self"
@@ -172,7 +183,7 @@ Instance: qido-endpoint-example
 InstanceOf: Endpoint
 Usage: #example
 Title: "QIDO-RS Endpoint"
-Description: "A non-WADO-RS Endpoint that can appear alongside SMART WADO-RS Endpoints. This guide's WADO-RS retrieval and token-presentation rules do not define access to this endpoint."
+Description: "A non-WADO-RS Endpoint that can appear alongside SMART WADO-RS Endpoints. ImagingStudy read permission does not authorize QIDO-RS access, and clients SHALL NOT send this guide's SMART token to this endpoint."
 * status = #active
 * connectionType = $ConnType#dicom-qido-rs
 * payloadType = $PayloadType#any
@@ -226,7 +237,7 @@ Instance: imaging-study-series-endpoint
 InstanceOf: SmartImagingStudy
 Usage: #example
 Title: "ImagingStudy with series in separate archives"
-Description: "A CT study with two released series in separate archives, each with a direct SMART WADO-RS Endpoint and its complete instance inventory. No study-level Endpoint is advertised. The App retrieves each series or instance from its designated Endpoint rather than assuming either archive can return the whole study. The source does not supply series or instance numbers for the second series."
+Description: "A CT study with two released series in separate archives, each with a direct SMART WADO-RS Endpoint and its complete instance inventory. No study-level Endpoint is advertised. The client retrieves each series or instance from its designated Endpoint rather than assuming either archive can return the whole study. The source does not supply series or instance numbers for the second series."
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.2"
 * status = #available

@@ -33,7 +33,7 @@ A simplified view of hospital imaging (inspired by the [IHE Radiology profiles](
 
 ### Mapping between the models
 
-Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. The shared identifiers are what let an app (or an Imaging Server) walk between them:
+Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. The shared identifiers are what let a client (or an Imaging Server) walk between them:
 
 <div style="text-align: center; margin: 1.5em 0;">
 <picture>
@@ -46,7 +46,7 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 * **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
-A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The app locates the study and any advertised WADO-RS Endpoints using `ImagingStudy?patient={patient-reference}&identifier=urn:dicom:uid|urn:oid:{uid}&_include=ImagingStudy:endpoint`, with the [Patient reference forms](patient-identity.html#patient-references) defined in the identity contract. Query parameter values are URL-encoded on the wire.
+A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The client locates the study and any advertised WADO-RS Endpoints using `ImagingStudy?patient={patient-reference}&identifier=urn:dicom:uid|urn:oid:{uid}&_include=ImagingStudy:endpoint`, with the [Patient reference forms](patient-identity.html#patient-references) defined in the identity contract. Query parameter values are URL-encoded on the wire.
 
 When the Patient is managed by another FHIR endpoint, the Imaging FHIR Server can use an authorized backend Patient lookup or existing registration/MPI data to map that Patient to PACS records.
 

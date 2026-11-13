@@ -24,9 +24,9 @@ Patient-context matching compares Patient identity, including its namespace. The
 
 ### Patient searches and subject references
 
-**App.** The App determines the Imaging FHIR Server's Patient namespace from [Patient-reference metadata](#patient-reference-base). For `patient/` access, the App uses the Patient bound to that endpoint's authorization grant. For `user/` or `system/` access, the App can obtain the applicable Patient reference from prior context or an authorized lookup at the Patient-hosting server. Identifier-based lookup uses the identifier's system and value; zero or multiple matches need resolution before selecting a Patient.
+**Client.** The client determines the Imaging FHIR Server's Patient namespace from [Patient-reference metadata](#patient-reference-base). For `patient/` access, the client uses the Patient bound to that endpoint's authorization grant. For `user/` or `system/` access, the client can obtain the applicable Patient reference from prior context or an authorized lookup at the Patient-hosting server. Identifier-based lookup uses the identifier's system and value; zero or multiple matches need resolution before selecting a Patient.
 
-When the Patient-reference base is the Imaging FHIR Server itself, the App can search with a local logical ID (`patient=123`), a typed relative reference (`patient=Patient/123`), or the corresponding absolute URL. For an externally anchored Imaging FHIR Server, the App SHALL use the anchor's absolute Patient URL when supplying the `patient` parameter. Relative references retain their normal FHIR resolution against the server being queried.
+When the Patient-reference base is the Imaging FHIR Server itself, the client can search with a local logical ID (`patient=123`), a typed relative reference (`patient=Patient/123`), or the corresponding absolute URL. For an externally anchored Imaging FHIR Server, the client SHALL use the anchor's absolute Patient URL when supplying the `patient` parameter. Relative references retain their normal FHIR resolution against the server being queried.
 
 **Imaging FHIR Server.** The Imaging FHIR Server SHALL populate `ImagingStudy.subject` with a reference to the Patient in its effective Patient-reference base. For an external base, that reference SHALL be absolute. For its own base, the reference can be relative or absolute. Relative references in resources retain their normal FHIR resolution against the resource's hosting endpoint.
 
@@ -38,9 +38,9 @@ For user-level access, a launch Patient provides workflow context; the grant is 
 
 A FHIR resource's `id` identifies it within its resource type and hosting FHIR base. Deployment-side matching and mapping mechanisms are outside this guide's scope.
 
-When communicating established resource linkage across FHIR endpoints, Apps and FHIR Servers SHALL identify corresponding resources using shared FHIR business identifiers, matching `Identifier.system` and `Identifier.value` through agreed assigning-authority mappings, or an absolute reference to the target resource. They SHALL NOT infer correspondence from equal logical IDs at different FHIR base URLs.
+When communicating established resource linkage across FHIR endpoints, Clients and FHIR Servers SHALL identify corresponding resources using shared FHIR business identifiers, matching `Identifier.system` and `Identifier.value` through agreed assigning-authority mappings, or an absolute reference to the target resource. They SHALL NOT infer correspondence from equal logical IDs at different FHIR base URLs.
 
-For `user/` and `system/` access, an App using this linkage to locate a corresponding Patient, study, order, or clinician SHALL use the applicable shared identifier or a known target reference within its authorized access.
+For `user/` and `system/` access, a client using this linkage to locate a corresponding Patient, study, order, or clinician SHALL use the applicable shared identifier or a known target reference within its authorized access.
 
 The target server SHALL independently validate the token and authorize the requested operation.
 
@@ -103,7 +103,7 @@ The facade's own document at `https://imaging.example.org/fhir/.well-known/smart
 
 #### Establishing patient-scoped access
 
-In this deployment, the Authorization Server establishes clinical Patient `123` and RIS Patient `987` as the authorized Patients for the same person. If it cannot establish the RIS binding, patient-scoped RIS access remains unauthorized. Imaging-only apps can receive their bindings without requesting Patient demographic scopes.
+In this deployment, the Authorization Server establishes clinical Patient `123` and RIS Patient `987` as the authorized Patients for the same person. If it cannot establish the RIS binding, patient-scoped RIS access remains unauthorized. Imaging-only clients can receive their bindings without requesting Patient demographic scopes.
 
 In this token response example, the original authorized FHIR endpoint is `https://clinical.example.org/fhir`. The clinical entry inherits the top-level scope; the imaging entries each specify their granted imaging scope. The facade entry supplies the clinical Patient's absolute URL using this guide's extension:
 
@@ -142,7 +142,7 @@ The clinical and RIS entries supply their local Patient IDs; the facade supplies
 
 #### Searching with the authorized Patient reference
 
-The app uses the facade's absolute Patient context:
+The client uses the facade's absolute Patient context:
 
 ```
 GET https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2F123&_include=ImagingStudy:endpoint
@@ -220,11 +220,11 @@ This context identifies `https://imaging.example.org/fhir/ImagingStudy/42` direc
 }
 ```
 
-Using the study identifier and the facade's authorized Patient context, the App searches:
+Using the study identifier and the facade's authorized Patient context, the client searches:
 
 ```
 GET https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2F123&identifier=urn%3Adicom%3Auid%7Curn%3Aoid%3A1.2.840.113619.2.55.3.604688435.123.1&_include=ImagingStudy:endpoint
 Authorization: Bearer access-token-value-unguessable
 ```
 
-The returned study can have a different logical ID from an `ImagingStudy` at the Clinical FHIR Server. Its shared Study Instance UID supplies the correlation. The Imaging FHIR Server independently authorizes the search and returns only permitted studies and Endpoints. A launch context containing `DiagnosticReport/42` instead leads the App to that report at its originating endpoint and then to its study or order linkage.
+The returned study can have a different logical ID from an `ImagingStudy` at the Clinical FHIR Server. Its shared Study Instance UID supplies the correlation. The Imaging FHIR Server independently authorizes the search and returns only permitted studies and Endpoints. A launch context containing `DiagnosticReport/42` instead leads the client to that report at its originating endpoint and then to its study or order linkage.

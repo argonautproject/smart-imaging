@@ -10,23 +10,33 @@ Description: "Requirements for a SMART Imaging Access FHIR endpoint."
 * fhirVersion = #4.0.1
 * format = #json
 * description = """
-Requirements for the Imaging FHIR Server. WADO-RS retrieval and SMART token
-validation are specified in [Retrieving images](specification.html#retrieving-images)
-and [Authorization](specification.html#authorization).
+Requirements for the Imaging FHIR Server. The shared authorization arrangement and
+scope mapping are specified in [Cooperating servers](specification.html#cooperating-servers)
+and [Imaging permissions](specification.html#imaging-permissions). WADO-RS retrieval
+is specified in [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].mode = #server
 * rest[0].security.description = """
 FHIR requests carry a SMART access token issued by the Authorization Server configured
-for the deployment. Requirements for supported authorization modes, token acquisition,
-token validation, access enforcement, and capability issuance are specified in
-[Authorization](specification.html#authorization). Discovery of the endpoint's
-Patient-reference base is specified in [Patient-reference base](patient-identity.html#patient-reference-base);
+for the deployment. Requirements for supported authorization modes and token acquisition
+are specified in [Authorization](specification.html#authorization). The required
+single-token baseline and optional DPoP or per-endpoint OAuth Token Exchange arrangements
+are specified in [Cooperating servers](specification.html#cooperating-servers).
+Token validation and access enforcement on every request are specified in
+[Imaging Server authorization](specification.html#imaging-server-authorization);
+read and search permissions are specified in
+[Imaging permissions](specification.html#imaging-permissions).
+Discovery of the endpoint's Patient-reference base is specified in
+[Patient-reference base](patient-identity.html#patient-reference-base);
 grant binding and per-endpoint patient context are specified in
 [Endpoint patient context](patient-identity.html#endpoint-patient-context).
 Discovery of supported grants through `grant_types_supported` and token-endpoint
 authentication metadata is specified in [Discovery](specification.html#discovery).
-Requirements for presenting the same token on retrieval, validating capabilities and their token binding, and
-enforcing capability lifetime and revocation are specified in
+Clients protect tokens and limit their recipients as specified in
+[Client token handling](specification.html#app-token-handling).
+Retrieval accepts any currently valid token from the configured Authorization Server
+that authorizes the requested access, including refreshed or newly issued tokens;
+it does not require the token used for the search. See
 [Retrieving images](specification.html#retrieving-images).
 """
 * rest[0].resource[0].type = #ImagingStudy
@@ -36,23 +46,26 @@ The server SHALL support searching ImagingStudy by the standard `patient` parame
 according to [Patient references](patient-identity.html#patient-references), alone and in
 combination with `_lastUpdated` or `identifier` (a DICOM Study Instance UID
 in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
-for referenced study- and series-level Endpoints in the search Bundle. Apps SHALL
+for referenced study- and series-level Endpoints in the search Bundle. Clients SHALL
 resolve Endpoints provided as response-local Bundle entries, separately addressable
-resources included in the Bundle, or contained resources. Response-specific
-capability Endpoints SHOULD use urn:uuid fullUrl values; the server SHALL include
-them on the same Bundle page as each referencing study, even without an _include request.
+resources included in the Bundle, or contained resources, including UUID URN and
+REST references. The server MAY use response-local Endpoints with urn:uuid fullUrl
+values and SHALL include each response-local Endpoint on the same Bundle page as
+each referencing study, even without an _include request.
 
 Study representation, released inventory, endpoint coverage, and status interpretation
 are specified in [Finding studies](specification.html#finding-studies).
 
-Searches SHALL enforce the access rules in [Finding studies](specification.html#finding-studies):
-patient-context mismatches and backend requests for unauthorized patients receive
-403 Forbidden. Results and included Endpoints SHALL exclude unauthorized studies.
-Neither authorization mode requires population-wide search.
+Searches SHALL enforce the access rules in
+[Imaging Server authorization](specification.html#imaging-server-authorization)
+and [Finding studies](specification.html#finding-studies): patient-scoped requests
+outside the granted patient context and backend requests for unauthorized patients
+receive 403 Forbidden. Results and included Endpoints SHALL exclude unauthorized
+studies. Neither authorization mode requires population-wide search.
 
 If results are not yet available (for example, the server is querying an
 underlying PACS), the server MAY respond `503` with a `Retry-After` header;
-the app retries after the indicated number of seconds.
+the client retries after the indicated number of seconds.
 """
 * rest[0].resource[0].interaction[0].code = #search-type
 * rest[0].resource[0].searchInclude[0] = "ImagingStudy:endpoint"

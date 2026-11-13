@@ -72,22 +72,33 @@ Title: "SMART WADO-RS Endpoint"
 Description: """
 A DICOM WADO-RS endpoint referenced at study or series level from a SMART ImagingStudy.
 
-The `address` is a WADO-RS base URL. The App appends the applicable study,
-series, or instance retrieval path and presents the same SMART access token
-used for the authorized FHIR request.
+The `address` is an opaque WADO-RS base URL. The client preserves its path
+prefix when appending the applicable study, series, or instance retrieval path.
+The endpoint participates in the single-token arrangement specified in
+[Cooperating servers](specification.html#cooperating-servers). The DICOMweb
+Server SHALL accept any currently valid token from the configured Authorization
+Server that authorizes the requested access; it need not be the token used
+for the search. Retrieval permissions are specified in
+[Imaging permissions](specification.html#imaging-permissions).
 
 The DICOMweb Server SHALL support series- and instance-level retrieval at
 this endpoint. When advertised at study level, the endpoint covers all released
 series and instances and SHALL support full-study retrieval. Retrieval remains
-subject to the authorization checks and denial requirements in
-[Retrieving images](specification.html#retrieving-images).
+subject to the token and access checks in
+[Imaging Server authorization](specification.html#imaging-server-authorization)
+and the denial requirements in [Retrieving images](specification.html#retrieving-images).
 
-The address may be a capability URL carrying study-specific permissions bound
-to that token. For these response-specific Endpoints, servers SHOULD use a
-Bundle entry with a `urn:uuid:...` fullUrl, referenced by ImagingStudy.endpoint
-or ImagingStudy.series.endpoint.
+Endpoints may be response-local Bundle entries with a `urn:uuid:...` fullUrl,
+referenced by ImagingStudy.endpoint or ImagingStudy.series.endpoint.
 The UUID identifies the Endpoint within the response; `address` remains the
-HTTPS retrieval base URL. See [Finding studies](specification.html#finding-studies).
+HTTPS retrieval base URL. The Imaging FHIR Server SHALL include each response-local
+Endpoint on the same Bundle page as each referencing study, even without `_include`.
+See [Finding studies](specification.html#finding-studies).
+
+An address may carry optional signed study context, as illustrated in the
+non-normative [authorization patterns](authorization-patterns.html).
+Such context is not a bearer permission and does not replace validation of the
+current token and current access policy.
 """
 * status MS
 * connectionType MS

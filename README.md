@@ -7,9 +7,10 @@ already use for clinical data.
 The guide supports both SMART App Launch and SMART Backend Services. Deployments
 can support either or both patterns, using the same study search and DICOM
 retrieval interfaces subject to the applicable access permissions.
-In either pattern, clients present the same SMART access token for study search
-and DICOM retrieval. Servers can use token-bound capability URLs to carry
-study-specific permissions to the retrieval service.
+In either pattern, clients present a currently valid SMART access token authorizing
+the requested study search or DICOM retrieval, including refreshed or newly issued
+tokens. Servers can use optional signed study context alongside the current token
+and access policy.
 
 Grew out of the [Sync for Science imaging spec](https://github.com/sync-for-science/imaging);
 reference implementation and sandbox at <https://github.com/jmandel/smart-imaging>
