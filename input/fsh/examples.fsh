@@ -234,6 +234,11 @@ Title: "ImagingStudy with mixed endpoint connection types"
 Description: "A CT study with two released series and their complete instance inventories. The study-level SMART WADO-RS Endpoint covers both series. The first series inherits that WADO-RS coverage despite having a QIDO-RS Endpoint; the second overrides it with a direct WADO-RS Endpoint for series and instance retrieval. The study and second-series lists also demonstrate mixed connection types."
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.1"
+* identifier[accession][0].type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN
+* identifier[accession][0].system = "https://hospital.example.org/accessions"
+* identifier[accession][0].value = "ACC20261112"
+* identifier[accession][1].type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN
+* identifier[accession][1].value = "LEGACY2468"
 * status = #available
 * subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
 * modality = $DCM#CT "Computed Tomography"
@@ -268,6 +273,9 @@ Title: "ImagingStudy with series in separate archives"
 Description: "A CT study with two released series in separate archives, each with a direct SMART WADO-RS Endpoint and its complete instance inventory. No study-level Endpoint is advertised. The client retrieves each series or instance from its designated Endpoint rather than assuming either archive can return the whole study. The source does not supply series or instance numbers for the second series."
 * identifier[dicomUid].system = "urn:dicom:uid"
 * identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261112.2"
+* identifier[accession].type = http://terminology.hl7.org/CodeSystem/v2-0203#ACSN
+* identifier[accession].system = "https://hospital.example.org/accessions"
+* identifier[accession].value = "ACC20261112"
 * status = #available
 * subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
 * modality = $DCM#CT "Computed Tomography"
@@ -287,6 +295,32 @@ Description: "A CT study with two released series in separate archives, each wit
 * series[1].endpoint[wadoRs] = Reference(wado-endpoint-secondary-example)
 * series[1].instance.uid = "1.2.840.99999999.20261112.2.2.1"
 * series[1].instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+
+// ---------- Accession search matching multiple studies ----------
+
+Instance: imaging-accession-search-response
+InstanceOf: Bundle
+Usage: #example
+Title: "Accession search matching two studies"
+Description: """
+An authorized patient-and-identifier search for accession ACC20261112 in the
+hospital's assigning-authority namespace returns two distinct CT studies.
+The first study also carries accession LEGACY2468, whose assigning-authority
+URI is unknown. Each accession is typed with v2-0203 ACSN; the DICOM Study
+Instance UID uses the separate urn:dicom:uid identifier slice.
+Searching the same patient with identifier=ACC20261112 (value only) also
+matches these studies. Endpoint references resolve to separately published resources.
+"""
+* type = #searchset
+* total = 2
+* link[0].relation = "self"
+* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2Fpatient-example&identifier=https%3A%2F%2Fhospital.example.org%2Faccessions%7CACC20261112"
+* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-mixed-endpoints"
+* entry[0].resource = imaging-study-mixed-endpoints
+* entry[0].search.mode = #match
+* entry[1].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-series-endpoint"
+* entry[1].resource = imaging-study-series-endpoint
+* entry[1].search.mode = #match
 
 // ---------- Metadata without WADO-RS retrieval endpoints ----------
 

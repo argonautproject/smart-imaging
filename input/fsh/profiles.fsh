@@ -4,21 +4,29 @@ Id: smart-imaging-study
 Title: "SMART ImagingStudy"
 Description: """
 An ImagingStudy returned by a SMART Imaging Access server, with a DICOM Study
-Instance UID identifier and optional study- and series-level Endpoints.
+Instance UID identifier, accession identifiers when known, and optional study- and series-level Endpoints.
 WADO-RS Endpoints conform to the SMART WADO-RS Endpoint profile; other endpoint
 types are also permitted. Endpoint coverage for released series is specified in
 [Finding studies](specification.html#finding-studies).
 """
 * identifier 1..* MS
-* identifier ^slicing.discriminator.type = #value
-* identifier ^slicing.discriminator.path = "system"
+* identifier ^slicing.discriminator.type = #pattern
+* identifier ^slicing.discriminator.path = "$this"
 * identifier ^slicing.rules = #open
-* identifier contains dicomUid 1..1 MS
+* identifier contains dicomUid 1..1 MS and accession 0..* MS
 * identifier[dicomUid] ^short = "DICOM Study Instance UID"
 * identifier[dicomUid] ^definition = "The study's DICOM Study Instance UID, expressed as an identifier with system `urn:dicom:uid` and a value of the form `urn:oid:...`."
 * identifier[dicomUid].system 1..1
-* identifier[dicomUid].system = "urn:dicom:uid" (exactly)
+* identifier[dicomUid] ^patternIdentifier.system = "urn:dicom:uid"
 * identifier[dicomUid].value 1..1
+* identifier[accession] ^short = "Accession number"
+* identifier[accession] ^definition = "An accession associated with the study, including DICOM Accession Number (0008,0050). The Imaging FHIR Server SHALL populate this slice when the accession is known, with the accession value and the assigning-authority URI as system when known."
+* identifier[accession] ^patternIdentifier.type.coding[0].system = "http://terminology.hl7.org/CodeSystem/v2-0203"
+* identifier[accession] ^patternIdentifier.type.coding[0].code = #ACSN
+* identifier[accession].type 1..1 MS
+* identifier[accession].system MS
+* identifier[accession].system ^short = "Assigning-authority URI, when known"
+* identifier[accession].value 1..1 MS
 * status MS
 * status ^comment = "The available status indicates that associated instances exist, not that they are accessible through WADO-RS. Study metadata may be returned without retrieval endpoints, subject to access policy."
 * subject only Reference(Patient)

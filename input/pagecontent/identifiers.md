@@ -43,7 +43,7 @@ Clinical FHIR, imaging FHIR, and DICOM each represent a view of the same study. 
 </div>
 
 * **In DICOM**, the study record itself carries the Accession Number, the Study Instance UID, and patient demographics including MRN; series and instances have their own UIDs.
-* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID as its identifier, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, optionally a `basedOn` reference carrying the Accession Number, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
+* **On the Imaging FHIR Server**, `ImagingStudy` mirrors the released DICOM hierarchy: the Study Instance UID and known accession numbers in `identifier`, series and instance UIDs and SOP Classes within, a reference to the FHIR `Patient` resource, and study- or series-level `endpoint` references to access services, including WADO-RS. An MRN may be used internally to map that patient to imaging records.
 * **On the Clinical FHIR Server**, the `ServiceRequest` carries the Accession Number and the `DiagnosticReport` should reference the study by Study Instance UID — an *identifier reference*, not necessarily a resolvable URL.
 
 A clinical record can identify a study by Study Instance UID without recording its retrieval URL. The client locates the study and any advertised WADO-RS Endpoints using `ImagingStudy?patient={patient-reference}&identifier=urn:dicom:uid|urn:oid:{uid}&_include=ImagingStudy:endpoint`, with the [Patient reference forms](patient-identity.html#patient-references) defined in the identity contract. Query parameter values are URL-encoded on the wire.
@@ -64,7 +64,7 @@ The DICOM-to-FHIR mappings below use assigning-authority URI agreements. A local
 |---|---|---|
 | Patient ID `(0010,0020)`, qualified by Issuer of Patient ID `(0010,0021)` and Issuer of Patient ID Qualifiers Sequence `(0010,0024)` when supplied | `Patient.identifier` | Agreed assigning-authority URI; Patient ID value |
 | Study Instance UID `(0020,000D)` | `ImagingStudy.identifier` | `urn:dicom:uid`; `urn:oid:{StudyInstanceUID}` |
-| Accession Number `(0008,0050)`, qualified by Issuer of Accession Number Sequence `(0008,0051)` | `ServiceRequest.identifier` | Agreed accession-issuer URI; Accession Number value |
+| Accession Number `(0008,0050)`, qualified by Issuer of Accession Number Sequence `(0008,0051)` when supplied | `ImagingStudy.identifier[accession]` with type `http://terminology.hl7.org/CodeSystem/v2-0203#ACSN` | Assigning-authority URI when known; Accession Number value |
 | Series Instance UID `(0020,000E)` | `ImagingStudy.series.uid` | Raw UID, without `urn:oid:` |
 | SOP Instance UID `(0008,0018)` | `ImagingStudy.series.instance.uid` | Raw UID, without `urn:oid:` |
 | Clinician identification, such as Referring Physician Identification Sequence `(0008,0096)` | `Practitioner.identifier` used by a clinical-role reference | Agreed clinician identifier-system URI; identifier value from the identification sequence |
@@ -90,7 +90,13 @@ An independent RIS might carry the same business identifier on its own `Patient/
 
 `DiagnosticReport.imagingStudy` can identify the study through a FHIR `Reference.identifier` containing the Study Instance UID system and value above. Study Instance UID identifies the DICOM study; DICOM Study ID `(0020,0010)` is a separate attribute, and `ImagingStudy.id` is the FHIR server's logical ID.
 
-An accession identifies an order in its issuer's namespace. The `ServiceRequest` and the study's order linkage can share that identifier.
+An accession identifies an order in its issuer's namespace and can be associated with multiple studies. The `ServiceRequest` and `ImagingStudy.identifier[accession]` can share that identifier. A study can also carry multiple accession identifiers.
+
+The [study search contract](specification.html#finding-studies-imaging-fhir-server) defines accession representation and lookup in this guide's FHIR R4 profile. A Client can use `patient={patient-reference}&identifier={system}|{value}` when the issuer is known, or `patient={patient-reference}&identifier={value}` to search across issuer namespaces. Both forms return only authorized studies for the requested patient. The [accession search example](Bundle-imaging-accession-search-response.html) illustrates two studies sharing one accession and an additional accession whose assigning-authority URI is unknown.
+
+[FHIR R5](https://hl7.org/fhir/R5/imagingstudy.html#notes) and [FHIR R6 draft](https://build.fhir.org/imagingstudy.html#accession-number) discuss accession representation; these are informative references, not versions profiled by this guide.
+
+[IHE MADO](https://profiles.ihe.net/RAD/MADO/StructureDefinition-MadoImagingStudy.html) provides another representation through `ImagingStudy.basedOn[order].identifier`. Its [accession identifier profile](https://profiles.ihe.net/RAD/MADO/StructureDefinition-MadoAccessionNumberIdentifier.html) includes both `http://terminology.hl7.org/CodeSystem/v2-0203#ACSN` and `http://dicom.nema.org/resources/ontology/DCM#121022` codings. An Imaging FHIR Server can support MADO as well; SMART Imaging requires neither duplicate accession data in `basedOn` nor support for that element.
 
 ### Clinician identifiers
 

@@ -44,8 +44,13 @@ it does not require the token used for the search. See
 * rest[0].resource[0].documentation = """
 The Imaging FHIR Server SHALL support searching ImagingStudy by the standard `patient`
 parameter according to [Patient references](patient-identity.html#patient-references),
-alone and in combination with `identifier` (a DICOM Study Instance UID in
-`urn:oid:...` form). The Imaging FHIR Server SHOULD support `patient` + `_lastUpdated`.
+alone and in combination with `identifier`. For `patient` + `identifier`,
+the Imaging FHIR Server SHALL support accession numbers, DICOM Study Instance UIDs
+(system `urn:dicom:uid`, value in `urn:oid:...` form), and other study identifiers,
+accepting both `identifier={system}|{value}` and `identifier={value}`. Results SHALL
+match the requested patient and identifier and be authorized for the Client.
+One accession can match multiple studies.
+The Imaging FHIR Server SHOULD support `patient` + `_lastUpdated`.
 Supporting servers SHALL document their timestamp-update behavior in their developer
 documentation.
 The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint`
@@ -84,7 +89,7 @@ The Imaging FHIR Server MAY instead respond `503 Service Unavailable` with a
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
-* rest[0].resource[0].searchParam[1].documentation = "A DICOM Study Instance UID in `urn:oid:...` form, used with `patient` to look up a specific study."
+* rest[0].resource[0].searchParam[1].documentation = "The Imaging FHIR Server SHALL support accession numbers, DICOM Study Instance UIDs (system `urn:dicom:uid`, value `urn:oid:...`), and other study identifiers with `patient`, accepting both `identifier={system}|{value}` and `identifier={value}`. Results SHALL match the requested patient and identifier and be authorized for the Client. One accession can match multiple studies."
 * rest[0].resource[0].searchParam[2].name = "_lastUpdated"
 * rest[0].resource[0].searchParam[2].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
 * rest[0].resource[0].searchParam[2].type = #date

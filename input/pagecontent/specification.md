@@ -250,6 +250,10 @@ If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`,
 | `patient=123` | SHALL | List the patient's studies accessible under this authorization |
 | `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | SHOULD | Filter studies by their FHIR resource update timestamp |
 | `patient=123&identifier=urn:dicom:uid%7Curn:oid:1.2.3` | SHALL | Look up one study by DICOM Study Instance UID |
+| `patient=123&identifier=https%3A%2F%2Fhospital.example.org%2Faccessions%7CACC20261112` | SHALL | Find studies by accession number and assigning authority |
+| `patient=123&identifier=ACC20261112` | SHALL | Find studies by accession value across assigning authorities |
+
+The Imaging FHIR Server SHALL support `patient` + `identifier` for accession numbers, DICOM Study Instance UIDs, and other study identifiers. It SHALL accept both `identifier={system}|{value}` (namespace and value) and `identifier={value}` (value only, regardless of namespace). Query parameter values are URL-encoded on the wire. The Imaging FHIR Server SHALL return only studies matching the requested patient and identifier that the Client is authorized to access. One accession can match multiple studies.
 
 The Imaging FHIR Server supporting `patient` + `_lastUpdated` SHALL document its timestamp-update behavior in its developer documentation.
 
@@ -258,6 +262,10 @@ The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that r
 **Access control.** The Imaging FHIR Server SHALL enforce the checks in [Authorization](#authorization) on every search. For requests authorized by `patient/` scopes, the server SHALL return `403 Forbidden` if a supplied `patient` reference identifies a different patient from the grant's patient context. For requests authorized by `system/` scopes, the server SHALL return `403 Forbidden` if the requested patient is outside the client's authorized access. The server SHALL omit studies and included Endpoints the client is not permitted to access. These rules apply to all supported search combinations.
 
 **Study representation and inventory.** The Imaging FHIR Server returns a searchset Bundle of `ImagingStudy` resources conforming to the [SMART ImagingStudy](StructureDefinition-smart-imaging-study.html) profile. Every study carries its **DICOM Study Instance UID** (an identifier with system `urn:dicom:uid` and a `urn:oid:...` value), its **status**, **patient**, and **modality**.
+
+**Accession numbers.** The Imaging FHIR Server SHALL populate the repeatable Must Support `ImagingStudy.identifier[accession]` slice when an accession is known, including DICOM Accession Number `(0008,0050)`. The Imaging FHIR Server SHALL set `Identifier.type` to include `http://terminology.hl7.org/CodeSystem/v2-0203#ACSN`, `Identifier.value` to the accession value, and `Identifier.system` to the assigning-authority URI when known.
+
+The Imaging FHIR Server MAY support additional representations, including [IHE MADO](https://profiles.ihe.net/RAD/MADO/). This guide requires neither duplicate accession data in other elements nor `basedOn` support. [FHIR R5](https://hl7.org/fhir/R5/imagingstudy.html#notes) and [FHIR R6 draft](https://build.fhir.org/imagingstudy.html#accession-number) accession guidance are informative references; this guide profiles FHIR R4.
 
 The study's subject follows the [Patient-reference requirements](patient-identity.html#patient-references).
 
@@ -290,6 +298,7 @@ Worked examples:
 | [Independent Patient namespace](ImagingStudy-imaging-study-independent-patient.html) | A local Patient reference on an imaging server with its own Patient records |
 | [Search response Bundle](Bundle-imaging-search-response.html) | Study matches with included Endpoints |
 | [Incomplete search response](Bundle-imaging-search-incomplete-response.html) | Available study matches, a resolvable Endpoint, and an incomplete-results warning |
+| [Accession search Bundle](Bundle-imaging-accession-search-response.html) | Two authorized studies sharing an accession; repeatable accession identifiers, including one with an unknown assigning authority |
 
 **Incomplete search results.** When a backing source is slow or unavailable, the Imaging FHIR Server MAY return available matches with an `OperationOutcome` entry whose `Bundle.entry.search.mode` is `outcome` and `OperationOutcome.issue.code` is `incomplete`. The Imaging FHIR Server SHALL describe the complete released series and instance inventory for each returned study, including when the set of study matches is incomplete.
 
