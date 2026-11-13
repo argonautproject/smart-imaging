@@ -351,21 +351,59 @@ Authorization: Bearer access-token-value-unguessable
 
 **Optional operations.** Clients SHOULD degrade gracefully when optional operations are unavailable, using series- or instance-level retrieval, or full-study retrieval where a study-level WADO-RS Endpoint is advertised.
 
+<a id="transfer-syntax-requests"></a>
+
+##### Transfer-syntax requests
+
+For DICOM-instance retrieval (`application/dicom`), the client expresses acceptable encodings and preferences in `Accept`. Each alternative names one transfer syntax. Higher `q` values indicate greater preference; omitted `q` means `1`, and `q=0` excludes an alternative. Selection is independent for each instance.
+
+**Lossless preferred, with uncompressed fallback:**
+
+```
+Accept: multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.4.90; q=1, multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.1; q=0.8
+```
+
+**Uncompressed Explicit VR Little Endian:**
+
+```
+Accept: multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.1
+```
+
+**As stored:**
+
+```
+Accept: multipart/related; type="application/dicom"; transfer-syntax=*
+```
+
+**Lossy preferred, with lossless and uncompressed fallbacks:**
+
+```
+Accept: multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.4.91; q=1, multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.4.90; q=0.8, multipart/related; type="application/dicom"; transfer-syntax=1.2.840.10008.1.2.1; q=0.6
+```
+
+Omitting `transfer-syntax` selects Explicit VR Little Endian (`1.2.840.10008.1.2.1`), subject to [DICOM's default-syntax exceptions](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.3.4.html). Explicitly requesting that UID permits only that encoding. A client storing or sharing a study SHOULD retrieve a lossless or as-stored copy. As-stored content may already be lossy; lossless encoding does not restore information previously lost.
+
+After `406 Not Acceptable`, the client can retrieve individual series or instances, or broaden `Accept` to include other syntaxes it can process. Further partial-retrieval behavior requires coordination with DICOM WG-27.
+
 <a id="retrieving-images-dicomweb-server"></a>
 
 #### DICOMweb Server: image retrieval
 
 **Required retrieval operations.** The DICOMweb Server SHALL support series- and instance-level retrieval at every SMART WADO-RS Endpoint for the content it serves, per the [DICOMweb WADO-RS standard](https://dicom.nema.org/medical/dicom/current/output/html/part18.html).
 
-At a SMART WADO-RS Endpoint advertised at study level, the DICOMweb Server SHALL also support full-study retrieval covering all released series and instances, with `Accept: multipart/related; type=application/dicom; transfer-syntax=*`. Accepting `transfer-syntax=*` lets the DICOMweb Server return stored files without re-encoding, so even a static file server behind an authorizing proxy can participate. Operation support does not override token or access restrictions.
+At a SMART WADO-RS Endpoint advertised at study level, the DICOMweb Server SHALL also support full-study retrieval covering all released series and instances. As-stored retrieval can avoid re-encoding, but does not remove the transfer-syntax capabilities required below. Operation support does not override token or access restrictions.
 
 The response returns the requested DICOM instances as a multipart body:
 
 ```
 HTTP/1.1 200 OK
-Content-Type: multipart/related; type=application/dicom; boundary=...
+Content-Type: multipart/related; type="application/dicom"; boundary=instances
 
-[DICOM instances, one part each]
+--instances
+Content-Type: application/dicom; transfer-syntax=1.2.840.10008.1.2.1
+
+[DICOM instance bytes]
+--instances--
 ```
 
 **Additional retrieval operations.** Further WADO-RS capabilities enable richer client behavior (progressive loading, thumbnails, viewing without a full download). DICOMweb Servers SHOULD support:
@@ -373,7 +411,24 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 * **Frame-level** retrieval — `.../instances/{uid}/frames/{n}`
 * **Rendered** images — `.../rendered` at study, series, or instance level
 * **Metadata** — `GET /studies/{uid}/metadata` (and at series/instance level)
-* **Transfer-syntax negotiation** — re-encoding payloads to match the `Accept` header
+
+<a id="transfer-syntax-negotiation"></a>
+
+##### Transfer-syntax negotiation
+
+The following requirements apply to retrieval of DICOM instances as `application/dicom`. Negotiation for other representations, including rendered images, follows the applicable DICOMweb rules.
+
+**Server capabilities.** The DICOMweb Server SHALL support Explicit VR Little Endian (`1.2.840.10008.1.2.1`) for every instance, except when pixel data is available only in a DICOM-defined lossy syntax or is too large for this encoding. For either exception, the server SHALL be able to return a DICOM-defined syntax. It SHOULD support JPEG 2000 Lossless (`1.2.840.10008.1.2.4.90`), JPEG-LS Lossless (`1.2.840.10008.1.2.4.80`), and JPEG Lossless, Non-Hierarchical, First-Order Prediction (`1.2.840.10008.1.2.4.70`). It MAY offer lossy syntaxes, subject to the selection rules below.
+
+**Selection per instance.** The DICOMweb Server SHALL select an acceptable representation for each instance according to the client's preferences and the [DICOM media-type selection rules](https://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_8.7.8.html). Different instances in one response may use different transfer syntaxes.
+
+The DICOMweb Server SHALL support `transfer-syntax=*` for as-stored retrieval without adding lossy compression. Stored representations remain subject to DICOM web-transfer restrictions. For private stored syntaxes, the server SHOULD NOT return them unless explicitly requested and SHOULD return an acceptable DICOM-defined syntax instead.
+
+The DICOMweb Server SHALL apply new lossy compression only when a lossy syntax is explicitly listed in `Accept` and selected by preference. It SHALL set Lossy Image Compression `(0028,2110)` to `01` and record Lossy Image Compression Ratio `(0028,2112)` and Method `(0028,2114)`.
+
+**Response and failure.** The DICOMweb Server SHALL declare each instance's actual transfer syntax in its response part's `Content-Type`. If no acceptable representation can be returned, it SHALL return `406 Not Acceptable`. If only some instances in a study or series have acceptable representations, it MAY reject the request with `406 Not Acceptable`.
+
+##### Retrieval access and availability
 
 **Retrieval authorization.** The DICOMweb Server SHALL perform the token and access checks in [Authorization](#authorization) on every request and enforce all applicable restrictions. These checks apply to every supported retrieval, including full studies, series, instances, frames, metadata, and rendered images, whether or not the client previously searched for the study.
 

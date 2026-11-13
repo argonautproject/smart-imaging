@@ -96,6 +96,8 @@ successfully return an authorized subset when access policy excludes other conte
 Retrieval remains subject to the token and access checks in
 [Imaging Server authorization](specification.html#imaging-server-authorization)
 and the release and delay requirements in [Retrieving images](specification.html#retrieving-images).
+Transfer-syntax capabilities, selection, and response requirements follow
+[Transfer-syntax negotiation](specification.html#transfer-syntax-negotiation).
 
 Endpoints may be response-local Bundle entries with a `urn:uuid:...` fullUrl,
 referenced by ImagingStudy.endpoint or ImagingStudy.series.endpoint.
