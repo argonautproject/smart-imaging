@@ -42,10 +42,13 @@ it does not require the token used for the search. See
 * rest[0].resource[0].type = #ImagingStudy
 * rest[0].resource[0].supportedProfile = Canonical(SmartImagingStudy)
 * rest[0].resource[0].documentation = """
-The server SHALL support searching ImagingStudy by the standard `patient` parameter
-according to [Patient references](patient-identity.html#patient-references), alone and in
-combination with `_lastUpdated` or `identifier` (a DICOM Study Instance UID
-in `urn:oid:...` form). The server SHALL support `_include=ImagingStudy:endpoint`
+The Imaging FHIR Server SHALL support searching ImagingStudy by the standard `patient`
+parameter according to [Patient references](patient-identity.html#patient-references),
+alone and in combination with `identifier` (a DICOM Study Instance UID in
+`urn:oid:...` form). The Imaging FHIR Server SHOULD support `patient` + `_lastUpdated`.
+Supporting servers SHALL document their timestamp-update behavior in their developer
+documentation.
+The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint`
 for referenced study- and series-level Endpoints in the search Bundle. Clients SHALL
 resolve Endpoints provided as response-local Bundle entries, separately addressable
 resources included in the Bundle, or contained resources, including UUID URN and
@@ -63,16 +66,21 @@ outside the granted patient context and backend requests for unauthorized patien
 receive 403 Forbidden. Results and included Endpoints SHALL exclude unauthorized
 studies. Neither authorization mode requires population-wide search.
 
-If results are not yet available (for example, the server is querying an
-underlying PACS), the server MAY respond `503` with a `Retry-After` header;
-the client retries after the indicated number of seconds.
+When a backing source is slow or unavailable, the Imaging FHIR Server MAY return
+available matches with an OperationOutcome entry whose `Bundle.entry.search.mode`
+is `outcome` and `OperationOutcome.issue.code` is `incomplete`. The Imaging FHIR
+Server SHALL describe the complete released series and instance inventory for each
+returned study, including when the set of study matches is incomplete.
+The Imaging FHIR Server MAY instead respond `503 Service Unavailable` with a
+`Retry-After` header. Client retry guidance is specified in
+[Finding studies](specification.html#finding-studies).
 """
 * rest[0].resource[0].interaction[0].code = #search-type
 * rest[0].resource[0].searchInclude[0] = "ImagingStudy:endpoint"
 * rest[0].resource[0].searchParam[0].name = "patient"
 * rest[0].resource[0].searchParam[0].definition = "http://hl7.org/fhir/SearchParameter/clinical-patient"
 * rest[0].resource[0].searchParam[0].type = #reference
-* rest[0].resource[0].searchParam[0].documentation = "A Patient reference following [Patient references](patient-identity.html#patient-references), used alone or with `_lastUpdated` or `identifier`."
+* rest[0].resource[0].searchParam[0].documentation = "The Imaging FHIR Server SHALL support a Patient reference following [Patient references](patient-identity.html#patient-references), alone and with `identifier`, and SHOULD support it with `_lastUpdated`."
 * rest[0].resource[0].searchParam[1].name = "identifier"
 * rest[0].resource[0].searchParam[1].definition = "http://hl7.org/fhir/SearchParameter/clinical-identifier"
 * rest[0].resource[0].searchParam[1].type = #token
@@ -80,4 +88,4 @@ the client retries after the indicated number of seconds.
 * rest[0].resource[0].searchParam[2].name = "_lastUpdated"
 * rest[0].resource[0].searchParam[2].definition = "http://hl7.org/fhir/SearchParameter/Resource-lastUpdated"
 * rest[0].resource[0].searchParam[2].type = #date
-* rest[0].resource[0].searchParam[2].documentation = "Used with `patient` to fetch only studies updated after a given time, e.g. `_lastUpdated=gt2023-04-17T04:00:00Z`."
+* rest[0].resource[0].searchParam[2].documentation = "The Imaging FHIR Server SHOULD support this parameter with `patient` to filter studies by their FHIR resource update timestamp, e.g. `_lastUpdated=gt2023-04-17T04:00:00Z`. Supporting servers SHALL document their timestamp-update behavior in their developer documentation."

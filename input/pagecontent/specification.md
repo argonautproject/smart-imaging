@@ -243,15 +243,17 @@ If the Imaging FHIR Server returns `503 Service Unavailable` with `Retry-After`,
 
 #### Imaging FHIR Server: study search
 
-**Supported searches.** The Imaging FHIR Server SHALL support the following search parameter combinations using Patient references as described in [Patient references](patient-identity.html#patient-references), under the [FHIR reference-search rules](https://hl7.org/fhir/R4/search.html#reference). The table uses `patient=123` for an endpoint using its own Patient namespace.
+**Supported searches.** The table specifies required and recommended search support for the Imaging FHIR Server, using Patient references as described in [Patient references](patient-identity.html#patient-references), under the [FHIR reference-search rules](https://hl7.org/fhir/R4/search.html#reference). The table uses `patient=123` for an endpoint using its own Patient namespace.
 
-| Query | Use case |
-|---|---|
-| `patient=123` | List the patient's studies accessible under this authorization |
-| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | Incremental sync: only studies updated since the client last checked |
-| `patient=123&identifier=urn:dicom:uid%7Curn:oid:1.2.3` | Look up one study by DICOM Study Instance UID |
+| Query | Support | Use case |
+|---|---|---|
+| `patient=123` | SHALL | List the patient's studies accessible under this authorization |
+| `patient=123&_lastUpdated=gt2023-04-17T04:00:00Z` | SHOULD | Filter studies by their FHIR resource update timestamp |
+| `patient=123&identifier=urn:dicom:uid%7Curn:oid:1.2.3` | SHALL | Look up one study by DICOM Study Instance UID |
 
-The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. This existing search parameter covers both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint`; no separate series-endpoint include is needed. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the machine-readable requirements.
+The Imaging FHIR Server supporting `patient` + `_lastUpdated` SHALL document its timestamp-update behavior in its developer documentation.
+
+The Imaging FHIR Server SHALL support `_include=ImagingStudy:endpoint` so that referenced Endpoints are returned in the search Bundle. This existing search parameter covers both `ImagingStudy.endpoint` and `ImagingStudy.series.endpoint`; no separate series-endpoint include is needed. See the [server CapabilityStatement](CapabilityStatement-smart-imaging-server.html) for the advertised search capabilities.
 
 **Access control.** The Imaging FHIR Server SHALL enforce the checks in [Authorization](#authorization) on every search. For requests authorized by `patient/` scopes, the server SHALL return `403 Forbidden` if a supplied `patient` reference identifies a different patient from the grant's patient context. For requests authorized by `system/` scopes, the server SHALL return `403 Forbidden` if the requested patient is outside the client's authorized access. The server SHALL omit studies and included Endpoints the client is not permitted to access. These rules apply to all supported search combinations.
 
@@ -287,8 +289,11 @@ Worked examples:
 | [Available but unretrievable study](ImagingStudy-imaging-study-available-not-retrievable.html) | Known instances without WADO-RS access |
 | [Independent Patient namespace](ImagingStudy-imaging-study-independent-patient.html) | A local Patient reference on an imaging server with its own Patient records |
 | [Search response Bundle](Bundle-imaging-search-response.html) | Study matches with included Endpoints |
+| [Incomplete search response](Bundle-imaging-search-incomplete-response.html) | Available study matches, a resolvable Endpoint, and an incomplete-results warning |
 
-**Delayed search results: 503 and Retry-After.** Some Imaging FHIR Servers front systems that answer slowly — for example, a proxy that issues a DICOM C-FIND to a PACS on first request. Rather than holding the connection open, the Imaging FHIR Server MAY respond:
+**Incomplete search results.** When a backing source is slow or unavailable, the Imaging FHIR Server MAY return available matches with an `OperationOutcome` entry whose `Bundle.entry.search.mode` is `outcome` and `OperationOutcome.issue.code` is `incomplete`. The Imaging FHIR Server SHALL describe the complete released series and instance inventory for each returned study, including when the set of study matches is incomplete.
+
+**Delayed search results: 503 and Retry-After.** When a backing source is slow or unavailable — for example, a proxy is waiting for a DICOM C-FIND response from a PACS — the Imaging FHIR Server MAY instead respond:
 
 ```
 HTTP/1.1 503 Service Unavailable

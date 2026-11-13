@@ -177,6 +177,34 @@ Description: "What a client receives from `GET [imaging-base]/ImagingStudy?patie
 * entry[2].resource = wado-endpoint-example
 * entry[2].search.mode = #include
 
+// ---------- Incomplete search response ----------
+
+Instance: imaging-search-incomplete-outcome
+InstanceOf: OperationOutcome
+Usage: #inline
+* id = "imaging-search-incomplete-outcome"
+* issue[0].severity = #warning
+* issue[0].code = #incomplete
+* issue[0].diagnostics = "A backing imaging source is unavailable. The response contains available study matches."
+
+Instance: imaging-search-incomplete-response
+InstanceOf: Bundle
+Usage: #example
+Title: "ImagingStudy search with incomplete matches"
+Description: "Available study matches when a backing source is unavailable. The returned MR study has its complete released instance inventory and a WADO-RS Endpoint resolved within this Bundle. The OperationOutcome reports an incomplete set of study matches."
+* type = #searchset
+* link[0].relation = "self"
+* link[0].url = "https://imaging.example.org/fhir/ImagingStudy?patient=https%3A%2F%2Fclinical.example.org%2Ffhir%2FPatient%2Fpatient-example&_include=ImagingStudy:endpoint"
+* entry[0].fullUrl = "https://imaging.example.org/fhir/ImagingStudy/imaging-study-external-endpoint"
+* entry[0].resource = imaging-study-external-endpoint
+* entry[0].search.mode = #match
+* entry[1].fullUrl = "https://imaging.example.org/fhir/Endpoint/wado-endpoint-example"
+* entry[1].resource = wado-endpoint-example
+* entry[1].search.mode = #include
+* entry[2].fullUrl = "urn:uuid:ade96430-256a-4775-b520-10bde5b7f404"
+* entry[2].resource = imaging-search-incomplete-outcome
+* entry[2].search.mode = #outcome
+
 // ---------- Study with mixed endpoint connection types ----------
 
 Instance: qido-endpoint-example
