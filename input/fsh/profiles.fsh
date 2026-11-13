@@ -41,7 +41,7 @@ types are also permitted. Endpoint coverage for released series is specified in
 * numberOfSeries MS
 * numberOfInstances MS
 * series 0..* MS
-* series ^comment = "The Imaging FHIR Server SHALL populate every released series and its UID. Released content is content made available for retrieval under the current authorization; the presence of metadata alone does not establish release."
+* series ^comment = "The Imaging FHIR Server MAY release an authorized subset of a study or series. It SHALL populate every released series and its UID. Released content is content designated for retrieval under the current authorization; the presence of metadata alone does not establish release."
 * series.uid MS
 * series.number 0..1 MS
 * series.number ^comment = "The Imaging FHIR Server SHALL populate this element when its value is present in the source."
@@ -83,10 +83,11 @@ for the search. Retrieval permissions are specified in
 
 The DICOMweb Server SHALL support series- and instance-level retrieval at
 this endpoint. When advertised at study level, the endpoint covers all released
-series and instances and SHALL support full-study retrieval. Retrieval remains
-subject to the token and access checks in
+series and instances and SHALL support full-study retrieval. The server MAY
+successfully return an authorized subset when access policy excludes other content.
+Retrieval remains subject to the token and access checks in
 [Imaging Server authorization](specification.html#imaging-server-authorization)
-and the denial requirements in [Retrieving images](specification.html#retrieving-images).
+and the release and delay requirements in [Retrieving images](specification.html#retrieving-images).
 
 Endpoints may be response-local Bundle entries with a `urn:uuid:...` fullUrl,
 referenced by ImagingStudy.endpoint or ImagingStudy.series.endpoint.

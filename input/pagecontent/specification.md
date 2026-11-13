@@ -261,7 +261,7 @@ The study's subject follows the [Patient-reference requirements](patient-identit
 
 See the non-normative [Study UID assumption](identifiers.html#study-uid-assumption) for the expected study/patient association across the Imaging FHIR and DICOMweb Servers.
 
-The Imaging FHIR Server SHALL populate every released series and instance, including `series.uid`, `series.instance.uid`, and `series.instance.sopClass`. Released content is content made available for DICOM retrieval under the current authorization; metadata alone does not establish release. The Imaging FHIR Server SHALL populate `series.number` and `series.instance.number` when their values are present in the source. These number elements remain `0..1` with Must Support; they can be absent when the source does not supply them.
+The Imaging FHIR Server MAY release an authorized subset of a study or series. It SHALL populate every released series and instance, including `series.uid`, `series.instance.uid`, and `series.instance.sopClass`. Released content is content designated for DICOM retrieval under the current authorization; metadata alone does not establish release. The Imaging FHIR Server SHALL populate `series.number` and `series.instance.number` when their values are present in the source. These number elements remain `0..1` with Must Support; they can be absent when the source does not supply them.
 
 Additional descriptive details, such as start time, series and instance counts, and further per-series metadata, help clients present a useful study list and should be included when available. The released UID hierarchy is compatible with [IHE MADO](https://profiles.ihe.net/RAD/MADO/). MADO's optional [`MadoKeyObjectDocumentTitle` extension](https://profiles.ihe.net/RAD/MADO/StructureDefinition-MadoKeyObjectDocumentTitle.html) conveys the title of a Key Object Selection document, allowing clients to distinguish KOS purposes.
 
@@ -282,6 +282,7 @@ Worked examples:
 | [Response-local study-context Endpoint](Bundle-imaging-study-context-search-response.html) | A WADO-RS base URL resolved within the search Bundle |
 | [Mixed endpoint types and a series override](ImagingStudy-imaging-study-mixed-endpoints.html) | WADO-RS inheritance, a direct series override, and non-WADO-RS Endpoints |
 | [Series in separate archives](ImagingStudy-imaging-study-series-endpoint.html) | Two direct series Endpoints and no study-wide endpoint |
+| [Authorized subset](ImagingStudy-imaging-study-authorized-subset.html) | Complete released inventory when policy excludes another series |
 | [Registered study metadata](ImagingStudy-imaging-study-metadata-only.html) | No associated instances or retrieval Endpoints |
 | [Available but unretrievable study](ImagingStudy-imaging-study-available-not-retrievable.html) | Known instances without WADO-RS access |
 | [Independent Patient namespace](ImagingStudy-imaging-study-independent-patient.html) | A local Patient reference on an imaging server with its own Patient records |
@@ -362,10 +363,10 @@ Content-Type: multipart/related; type=application/dicom; boundary=...
 
 **Retrieval authorization.** The DICOMweb Server SHALL perform the token and access checks in [Authorization](#authorization) on every request and enforce all applicable restrictions. These checks apply to every supported retrieval, including full studies, series, instances, frames, metadata, and rendered images, whether or not the client previously searched for the study.
 
-The DICOMweb Server SHALL deny requests outside the authorized access without returning DICOM data. A full-study request SHALL NOT return a successful partial study when access restrictions exclude some of its contents; the DICOMweb Server SHALL deny that request.
+The DICOMweb Server MAY successfully return an authorized subset of a study or series when access policy excludes other content. It SHALL NOT return content outside the authorized access. A study-level WADO-RS Endpoint covers all released content, as described in [Endpoint coverage](#finding-studies-imaging-fhir-server).
 
 **Expiry and revocation.** The DICOMweb Server SHALL check token validity when accepting each request. A response authorized before expiry MAY finish after expiry. New or retried requests SHALL be checked again.
 
-**Delayed retrieval.** If assembling authorized data takes time (for example, a C-MOVE from a PACS under the hood), the DICOMweb Server MAY respond `503` with a `Retry-After` header, exactly as in [Finding studies](#finding-studies).
+**Delayed retrieval.** If released content is temporarily unavailable while being assembled (for example, a C-MOVE from a PACS under the hood), the DICOMweb Server MAY respond `503 Service Unavailable` with `Retry-After`. Policy-excluded content is not delayed content. Further coordination of delayed and partial WADO-RS responses with DICOM WG-27 is pending.
 
 [Implementing Study-Level Authorization](authorization-patterns.html) describes ways to distribute these decisions and checks among cooperating systems.

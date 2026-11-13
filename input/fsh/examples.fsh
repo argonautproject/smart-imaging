@@ -339,3 +339,22 @@ The contained WADO-RS Endpoint covers the study's one released series and instan
 * series.instance.uid = "1.2.840.99999999.20261112.5.1.1"
 * series.instance.number = 1
 * series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
+
+// ---------- Authorized subset ----------
+
+Instance: imaging-study-authorized-subset
+InstanceOf: SmartImagingStudy
+Usage: #example
+Title: "ImagingStudy releasing an authorized subset"
+Description: "The source study has two series, but the current authorization releases only the first. This resource lists that series and its complete released instance inventory. A full-study retrieval at the contained Endpoint can successfully return the released series while excluding the other series."
+* contained[0] = wado-endpoint-contained
+* identifier[dicomUid].system = "urn:dicom:uid"
+* identifier[dicomUid].value = "urn:oid:1.2.840.99999999.20261203.10"
+* status = #available
+* subject.reference = "https://clinical.example.org/fhir/Patient/patient-example"
+* modality = $DCM#CT "Computed Tomography"
+* endpoint[wadoRs].reference = "#e"
+* series.uid = "1.2.840.99999999.20261203.10.1"
+* series.modality = $DCM#CT
+* series.instance.uid = "1.2.840.99999999.20261203.10.1.1"
+* series.instance.sopClass = urn:ietf:rfc:3986#urn:oid:1.2.840.10008.5.1.4.1.1.2
